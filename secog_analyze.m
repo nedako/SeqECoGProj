@@ -1,12 +1,10 @@
-function Dout=secog_analyze (what , getdat , SubjCodes , Dall)
+function Dout=secog_analyze (what , getdat , Dall)
 
 prefix = 'ecog1_';
-SubjCodes = SubjCodes;
 baseDir = '/Users/nkordjazi/Documents/SeqECoG/analyze';
 %baseDir = '/Users/nkordjazi/Documents/SeqEye/se1/SeqEye1/se1_data/analyze';
 % subj_name = {'XW' , 'ML' , 'DS' , 'BM' , 'HK' , 'BW'};
-subj_name = {'P1_sep14'};
-GC = [1 1 1 2 2 2];
+subj_name = {'P2'};
 load([baseDir , '/CMB.mat'])
 %load([baseDir , '/se1_all.mat'])
 % D   = load('/Users/nedakordjazi/Documents/SeqEye/SequenceHierarchical/Analysis/sh3_avrgPattern.mat');
@@ -23,14 +21,12 @@ switch what
             else
                 ANA = getrow(Dall , Dall.SN == i);
             end
-            %             BlPerDay = {[1 :14] [15 :29] [30 :44] [45 :59]};
-            %             ANA.Day = zeros(size(ANA.BN));
-            %             for d = 1:length(BlPerDay)
-            %                 ANA.Day(ismember(ANA.BN , BlPerDay{d})) = d;
-            %             end
-            GroupCode = GC(i);
+            BlPerDay = {[1 :12] [13 :25] [26 :39]};
+            ANA.Day = zeros(size(ANA.BN));
+            for d = 1:length(BlPerDay)
+                ANA.Day(ismember(ANA.BN , BlPerDay{d})) = d;
+            end
             ANA.SN(1:length(ANA.BN) , :) = i;
-            ANA.Group(1:length(ANA.BN),:) = GroupCode;
             ChnkArrng = zeros(2,7);
             Chnkplcmnt = zeros(2,7);
             
@@ -84,6 +80,7 @@ switch what
             
             ANA.isgood = ones(length(ANA.TN) , 1);
             for tn = 1:length(ANA.TN)
+
                 switch ANA.seqNumb(tn,1)
                     case {0,1,2,3,4,11,22,33,44,55}
                         ANA.seqlength(tn,1) = 7;
@@ -99,32 +96,7 @@ switch what
                 presses = [0 : length(find(ANA.AllPress(tn , :)))+1];
                 chunks  = [1 , ANA.ChnkPlcmnt(tn , :) , 1];
                 ANA.PressPressVelocity(tn , :) = NaN * ones(1,14);
-                if ANA.isgood(tn) & ~isnan(ANA.seqlength(tn,1))
-                    ANA.PressTimeSeries{tn,1} = zeros(ANA.AllPressIdx(tn , ANA.seqlength(tn)) + 100,1);
-                    IND = [0 , ANA.AllPressIdx(tn , 1:ANA.seqlength(tn))  , length(ANA.PressTimeSeries{tn,1})];
-                    ANA.PressTimeSeries{tn,1}(1 : IND(2)) = NaN*ANA.PressTimeSeries{tn,1}(1 : IND(2));
-                    ANA.PressTimeSeries{tn,1}(IND(end-1) : IND(end)) = NaN*ANA.PressTimeSeries{tn,1}(IND(end-1) : IND(end));
-                    
-                    for ind = 2:length(IND) - 2
-                        temp = linspace(presses(ind) , presses(ind+1) , IND(ind + 1) - IND(ind)+1);
-                        ANA.PressTimeSeries{tn,1}(IND(ind)+1 : IND(ind + 1)) = temp(1:end-1);
-                    end
-                    temp = [NaN; diff(ANA.PressTimeSeries{tn,1})];
-                    for w = 3 : length(ANA.PressTimeSeries{tn , 1}) - 1
-                        id = [w - 1  w + 1];
-                        if id (2) < length(ANA.PressTimeSeries{tn,1})
-                            ANA.pressVelocity{tn ,1}(w-2 , 1) = 1000*.25*(ANA.PressTimeSeries{tn,1}(id(2)) - ANA.PressTimeSeries{tn,1}(id(1)));
-                        end
-                    end
-                    
-                    for p = 1:ANA.seqlength(tn)
-                        id = [ANA.AllPressIdx(tn, p) - window  ANA.AllPressIdx(tn, p) + window];
-                        ANA.PressPressVelocity(tn , p) = nanmean(ANA.pressVelocity{tn,1}(id(1) : id(2)));
-                    end
-                else
-                    ANA.pressVelocity{tn ,1} = [];
-                    ANA.PressTimeSeries{tn,1} = [];
-                end
+               
                 
                 
                 % Create a smooth imposed-chunk timeseries

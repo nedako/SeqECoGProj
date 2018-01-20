@@ -1,6 +1,12 @@
+secog_makeEEG(subjNum , fileInfo)
+
 %% load the first recording
-filename = 'P1_Sep14-rec1.mat';
-prefix = 'Gibson__Darah_e6782a4f_d998_4d2e_975b_79d48ecfdaa9_Ch';
+subjname = {'P2'};
+mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} , '/'] ;
+
+cd([mainDir , 'iEEG_P2_Jan16/rec1')
+filename = 'P2_Jan16-rec1.mat';
+prefix = 'Thissen__Peter_01d34644_b566_4679_84d6_d3f415b203f6_Ch';
 n = 1;
 fName = [prefix num2str(n)];
 Data = load(filename , fName);
@@ -8,7 +14,7 @@ cmdstr = ['Data = Data.' , fName];
 eval(cmdstr);
 Data.ChannelNumber = n;
 Data.values = Data.values';
-fields = {'title' , 'comment'};
+fields = {'comment'}; % fields title and comment are the same
 Data = rmfield(Data , fields);
 
 
@@ -75,5 +81,4 @@ for n = 2:200
     clear temp
 end
 
-%% concatenate the data
-for i = 1:size(Data)
+Data.values = [Data.values Data2.values];

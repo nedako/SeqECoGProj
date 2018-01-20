@@ -60,7 +60,7 @@ function out  = secog_visualize(Dall , subjnum, what, distance, calc , day , rep
 baseDir = '/Users/nkordjazi/Documents/SeqECoG/analyze';
 % baseDir = '/Users/nkordjazi/Documents/SeqEye/se1/SeqEye1/se1_data/analyze';
 % subj_name = {'XW' , 'ML' , 'DS' , 'BM' , 'HK' , 'BW' 'XX'};
-subj_name = {'P1_sep14', 'XX'};
+subj_name = {'P2', 'XX'};
 if subjnum == length(subj_name)
       subjnum = 1:length(subj_name)-1;
 end
@@ -78,19 +78,18 @@ switch what
         %% within and between IPI ttest with randomization
         %% IPI per day
 %         
-%         ANA = getrow(Dall , Dall.isgood & ~Dall.isError & ismember(Dall.seqNumb , [0:2]) & Dall.Group == 1);
-%         ANA.seqNumb(ANA.seqNumb == 2) = 1;
-%         BN = unique(ANA.BN);        
-%         for bn = 1:length(BN)
-%             temp = getrow(ANA , ANA.BN == BN(bn));
-%             boxplot(reshape(temp.IPI , numel(temp.IPI),1) , reshape(temp.IPIarrangement  , numel(temp.IPIarrangement),1))
-%             hold on
-%         end
-%         lineplot()
+        ANA = getrow(Dall , Dall.isgood & ~Dall.isError & ismember(Dall.seqNumb , [0:4]) & Dall.Group == 1);
+        ANA.seqNumb(ANA.seqNumb > 0) = 1;
+        BN = unique(ANA.BN);        
+        for bn = 1:length(BN)
+            temp = getrow(ANA , ANA.BN == BN(bn));
+            boxplot(reshape(temp.IPI , numel(temp.IPI),1) , reshape(temp.IPIarrangement  , numel(temp.IPIarrangement),1))
+            hold on
+        end
 
         
-        ANA1 = getrow(Dall , ismember(Dall.SN , subjnum) & Dall.isgood & ismember(Dall.seqNumb , [1:4])  & ~Dall.isError &  ismember(Dall.Rep , rep) & ismember(Dall.Group , GroupCode));
-        ANA0 = getrow(Dall , ismember(Dall.SN , subjnum) & Dall.isgood & ismember(Dall.seqNumb , [0])  & ~Dall.isError &  ismember(Dall.Rep , rep)& ismember(Dall.Group , GroupCode)); 
+        ANA1 = getrow(Dall , ismember(Dall.SN , subjnum) & Dall.isgood & ismember(Dall.seqNumb , [1:4])  & ~Dall.isError &  ismember(Dall.Rep , rep) );
+        ANA0 = getrow(Dall , ismember(Dall.SN , subjnum) & Dall.isgood & ismember(Dall.seqNumb , [0])  & ~Dall.isError &  ismember(Dall.Rep , rep)); 
         
        
         IPInums = 1:6;
