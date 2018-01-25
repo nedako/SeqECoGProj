@@ -78,7 +78,7 @@ switch what
         %% within and between IPI ttest with randomization
         %% IPI per day
 %         
-        ANA = getrow(Dall , Dall.isgood & ~Dall.isError & ismember(Dall.seqNumb , [0:4]) & Dall.Group == 1);
+        ANA = getrow(Dall , Dall.isgood & ~Dall.isError & ismember(Dall.seqNumb , [0:4]));
         ANA.seqNumb(ANA.seqNumb > 0) = 1;
         BN = unique(ANA.BN);        
         for bn = 1:length(BN)

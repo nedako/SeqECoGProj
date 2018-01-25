@@ -48,32 +48,6 @@ end
 
 
 
-%% Calculating the average pattern
-SN = unique(Dall.seqNumb);
-SN = SN(SN~=5);
-
-
-clear EventMarker NormEventMarker EM NEM diffNEM
-for sn= 1:length(SN)
-    D = getrow(Dall , ismember(Dall.seqNumb , SN(sn)) & ~Dall.isError);
-    EventMarker{sn} = [];
-    NormEventMarker{sn} = [];
-    for k = 1:length(D.TN)
-        events = [-1 , 1:D.seqlength(k)];
-        if D.TN(k) >3
-            clear temp Ntemp
-            for jj = 1:length(events)
-                temp(1, jj) =  find(D.EventMarker{k} == events(jj));
-                Ntemp(1,jj) =  find(D.NormEventMarker{k} == events(jj));
-            end
-            EventMarker{sn} = [EventMarker{sn}; temp];
-            NormEventMarker{sn} = [NormEventMarker{sn} ;Ntemp];
-        end
-    end
-    EM{sn, :} = floor(mean(EventMarker{sn}));
-    NEM{sn, :} = floor(mean(NormEventMarker{sn}));
-    diffNEM{sn, :} = diff([0 , NEM{sn} , 500]);
-end
 
 %% Time normalizing each trial to the average pattern
 switch what
