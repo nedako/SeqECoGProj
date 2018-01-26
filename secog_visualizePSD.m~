@@ -1,0 +1,285 @@
+function secog_visualizePSD(Pall , subjNum, what)
+% Pall needs to be the structure containing time normalized, average
+% patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+while(c<=length(varargin))
+    switch(varargin{c})
+        case {'NumWarpSamp'}
+            % number of sine cycles to use in the Morlet wavelet
+            % default 10
+            eval([varargin{c} '= varargin{c+1};']);
+            c=c+2;
+         case {'Chan2Plot'}
+            % Channel(s) to plot
+            eval([varargin{c} '= varargin{c+1};']);
+            c=c+2;
+        otherwise
+            error(sprintf('Unknown option: %s',varargin{c}));
+    end
+end
+
+if ~exist('NumWarpSamp')
+    NumWarpSamp = 300;
+end
+
+
+subjname = {'P2'};
+mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} , '/'] ;
+cd(mainDir)
+load('AveragePatternMarker.mat')
+load('secog_all.mat')
+load('ChanLabels.mat')
+
+bandsLab = {'Delta <4Hz' , 'Theta 4-8Hz' , 'Alpha 8-13Hz' , 'L-Beta 13-24Hz' , 'H-Beta 24-36Hz' , 'L-Gamma 36-48Hz' , 'H-Gamma >48Hz'};
+E = getrow(E , strcmp(E.blockGroupNames , what));
+if isempty(E.EM)
+    error('Nothing to plot!')
+end
+figure('color' , 'white')
+for sn = 1:length(E.SN{1})
+    id = ismember(Dall.BN , E.blockGroups{1}) & ismember(Dall.seqNumb , E.SN{1}(sn));
+    F = getrow(Pall , id);
+    % sum the warped PSDs insife the F structure
+    tcount = 1;
+    for tn = 1:length(F.PSD_stim)
+        if isequal(size(F.PSD_stim{tn}) ,[length(ChanLabels) , length(bandsLab) , NumWarpSamp])
+            tempPow(tcount , :,:,:) = F.PSD_stim{tn};
+            tcount = tcount +1;
+        end
+    end
+    AvgPow{sn} = squeeze(nanmean(tempPow , 1));
+    figCount = 1;
+    for ch = 1:length(Chan2Plot)
+        subplot(length(Chan2Plot) , length(E.SN) , figCount)
+        for b =1:length(bandid)
+            plot([1:NumWarpSamp] , squeeze(AvgPow{sn}(ch , )) , 'LineWidth' , 3)
+            T(b) = Bands(b, 1)+7*b;
+            hold on
+        end
+    end
+end
+
+
+
+title (['Rep-finger ' , num2str(sn-5) ,', Block ' , num2str(BN(bn))])
+for lin = 1:length(NEM{sn})
+    line([NEM{sn}(lin) NEM{sn}(lin)] , [0 60] , 'color' , 'red' , 'LineStyle' , ':' , 'LineWidth' , 3)
+end
+xlabel('Norm Time')
+if snCount == 1
+    set(gca ,'YTickLabels' , bandsLab, 'YTick' , T );
+else
+    set(gca ,'YTickLabels' , [], 'YTick' , [] );
+end
+line([100 100] , [55 60],'color' , 'black' , 'LineWidth' , 5)
+text(60,57.5,'5','FontSize' , 16 )
+set(gca , 'XLim' , [1 500] , 'YLim' , [0,60],'FontSize' , 16,'Box' , 'off')
+figCount = figCount + 5;
+
+
+                
+                
+                
+                
+
+            end
+            snCount = snCount+1;
+        end
+        
+        figure('color' , 'white')
+        snCount = 1;
+        for sn = 6 : 10
+            figCount = snCount;
+            F = ismember(PSD.SeqNumb , SN(sn));
+            BN = PSD.BN(F);
+            Pow_non  = PSD.Pow_non(F);
+            Pow = PSD.Pow_stim(F);
+            Pow_pres = PSD.Pow_pres(F);
+            for bn = 1:length(BN)
+                clear Bands T
+                
+                for b =1:length(bandid)
+                    subplot(length(BN),5 , figCount)
+                    Bands(b, :) =  nanmean(Pow{bn}(bandid{b}(1) : bandid{b}(2),:));
+                    plot([1:500] , Bands(b, :)+7*b , 'LineWidth' , 3)
+                    T(b) = Bands(b, 1)+7*b;
+                    hold on
+                end
+                title (['Rep-finger ' , num2str(sn-5) ,', Block ' , num2str(BN(bn))])
+                for lin = 1:length(NEM{sn})
+                    line([NEM{sn}(lin) NEM{sn}(lin)] , [0 60] , 'color' , 'red' , 'LineStyle' , ':' , 'LineWidth' , 3)
+                end
+                xlabel('Norm Time')
+                if snCount == 1
+                    set(gca ,'YTickLabels' , bandsLab, 'YTick' , T );
+                else
+                    set(gca ,'YTickLabels' , [], 'YTick' , [] );
+                end
+                line([100 100] , [55 60],'color' , 'black' , 'LineWidth' , 5)
+                text(60,57.5,'5','FontSize' , 16 )
+                set(gca , 'XLim' , [1 500] , 'YLim' , [0,60],'FontSize' , 16,'Box' , 'off')
+                figCount = figCount + 5;
+            end
+            snCount = snCount+1;
+        end
+        
+        %%%%%%%%%%%%%%%% CHUNKS
+        figure('color' , 'white')
+        
+        snCount = 1;
+        for sn = 11 : 14
+            figCount = snCount;
+            F = ismember(PSD.SeqNumb , SN(sn));
+            BN = PSD.BN(F);
+            Pow_non  = PSD.Pow_non(F);
+            Pow = PSD.Pow_stim(F);
+            Pow_pres = PSD.Pow_pres(F);
+            
+            %     D = getrow(Dall , ismember(Dall.seqNumb , SN(sn)));
+            %     BN = unique(D.BN);
+            chunklab = {'Trip1' ,'Trip2' ,  'Quad1' , 'Quad2'};
+            for bn = 1:length(BN)        
+                subplot(length(BN),4 , figCount)
+                contourf([1:500],frex,Pow{bn},60,'linecolor','none')
+                caxis([-15 7])
+                colorbar
+                ylabel('Frequency(Hz)')
+                title ([chunklab{sn-10} , ' ',', Block ' , num2str(BN(bn))])
+                for lin = 1:length(NEM{sn})
+                    line([NEM{sn}(lin) NEM{sn}(lin)] , [1 150] , 'color' , 'red' , 'LineStyle' , ':' , 'LineWidth' , 3)
+                end
+                
+                xlabel('Norm Time')
+                figCount = figCount + 4;
+            end
+            snCount = snCount+1;
+        end
+        
+        figure('color' , 'white')
+        
+        snCount = 1;
+        for sn = 11 : 14
+            figCount = snCount;
+            F = ismember(PSD.SeqNumb , SN(sn));
+            BN = PSD.BN(F);
+            Pow_non  = PSD.Pow_non(F);
+            Pow = PSD.Pow_stim(F);
+            Pow_pres = PSD.Pow_pres(F);
+            
+            %     D = getrow(Dall , ismember(Dall.seqNumb , SN(sn)));
+            %     BN = unique(D.BN);
+            chunklab = {'Trip1' ,'Trip2' ,  'Quad1' , 'Quad2'};
+            for bn = 1:length(BN)
+                subplot(length(BN),4 , figCount)
+                clear Bands T
+                for b =1:length(bandid)
+                    Bands(b, :) =  nanmean(Pow{bn}(bandid{b}(1) : bandid{b}(2),:));
+                    plot([1:500] , Bands(b, :)+7*b , 'LineWidth' , 3)
+                    T(b) = Bands(b, 1)+7*b;
+                    hold on
+                end
+                set(gca , 'XLim' , [1 500] , 'YLim' , [0,60],'FontSize' , 16,'Box' , 'off')
+                if snCount == 1
+                    set(gca ,'YTickLabels' , bandsLab, 'YTick' , T );
+                else
+                    set(gca ,'YTickLabels' , [], 'YTick' , [] );
+                end
+                title ([chunklab{sn-10} , ' ',', Block ' , num2str(BN(bn))])
+                for lin = 1:length(NEM{sn})
+                    line([NEM{sn}(lin) NEM{sn}(lin)] , [0 60] , 'color' , 'red' , 'LineStyle' , ':' , 'LineWidth' , 3)
+                end
+                line([50 50] , [55 60],'color' , 'black' , 'LineWidth' , 5)
+                text(10,57.5,'5','FontSize' , 16 )
+                xlabel('Norm Time')
+                figCount = figCount + 4;
+            end
+            snCount = snCount+1;
+        end
+        %% average every 3 blocks before chunk blocks for all the structures
+        BG = {[1 2 3] [4 5 6] [7 8 9] [10 11 12]};
+        SN = unique(Dall.seqNumb);
+        SN = SN(SN~=5);
+        Fs = 1024;
+        % definitions, selections...
+        BN = unique(Dall.BN);
+        min_freq =  2;
+        max_freq = 150;
+        num_frex = 90;
+        
+        % define wavelet parameters
+        time = -1:1/Fs:1;
+        frex = logspace(log10(min_freq),log10(max_freq),num_frex);
+        
+        clear PN PS PP
+        for sn = 1:5
+            F = ismember(PSD.SeqNumb , SN(sn));
+            BN = PSD.BN(F);
+            Pow_non = PSD.Pow_non(F);
+            Pow = PSD.Pow_stim(F);
+            Pow_pres = PSD.Pow_pres(F);
+            %     D = getrow(Dall , ismember(Dall.seqNumb , SN(sn)));
+            %     BN = unique(D.BN);
+            for bg = 1:length(BG)
+                PN{sn ,bg} = zeros(90 , 500);
+                for bbg = 1:length(BG{bg})
+                    PN{bg} = PN{bg} + Pow_non{BG{bg}(bbg)};
+                end
+                PN{sn ,bg} = PN{bg} /bbg;
+                
+                PS{sn ,bg} = zeros(90 , 500);
+                for bbg = 1:length(BG{bg})
+                    PS{bg} = PS{bg} + Pow{BG{bg}(bbg)};
+                end
+                PS{sn , bg} = PS{bg} /bbg;
+                
+                PP{sn ,bg} = zeros(90 , 500);
+                for bbg = 1:length(BG{bg})
+                    PP{bg} = PP{bg} + Pow_pres{BG{bg}(bbg)};
+                end
+                PP{sn ,bg} = PP{bg} /bbg;
+            end
+        end
+        figure('color' , 'white')
+        figCount = 1;
+        SeqLAb = {'Random' , 'Struct1', 'Struct2', 'Struct3', 'Struct4'};
+        for bg = 1:length(BG)
+            for sn = 1:5
+                subplot(length(BG) , 5 , figCount)
+                contourf([1:500],frex,PS{sn,bg},60,'linecolor','none')
+%                 caxis([-80 70])
+                colorbar
+                ylabel('Frequency(Hz)')
+                xlabel('Norm Time')
+                title ([SeqLAb{sn} , ', Block ' , num2str(BN(bg))])
+                for lin = 1:length(NEM{sn})
+                    line([NEM{sn+1}(lin) NEM{sn+1}(lin)] , [2 150] , 'color' , 'red' , 'LineStyle' , ':' , 'LineWidth' , 3)
+                end
+                figCount = figCount + 1;
+            end
+        end
+        figure('color' , 'white')
+        figCount = 1;
+        SeqLAb = {'Random' , 'Struct1', 'Struct2', 'Struct3', 'Struct4'};
+        for bg = 1:length(BG)
+            for sn = 1:5
+                subplot(length(BG) , 5 , figCount)
+                clear Bands T
+                for b =1:length(bandid)
+                    Bands(b, :) =  nanmean(PS{sn,bg}(bandid{b}(1) : bandid{b}(2),:));
+                    plot([1:500] , Bands(b, :)+30*b , 'LineWidth' , 3)
+                    T(b) = Bands(b, 1)+30*b;
+                    hold on
+                end
+                set(gca , 'XLim' , [1 500] , 'YLim' , [0,270],'FontSize' , 16 , 'Box' , 'off')
+                set(gca , 'YTickLabels' , bandsLab, 'YTick' , T);
+                title ([SeqLAb{sn} , ', Block ' , num2str(BN(bg))])
+                for lin = 1:length(NEM{sn})
+                    line([NEM{sn+1}(lin) NEM{sn+1}(lin)] , [0 300] , 'color' , 'red' , 'LineStyle' , ':' , 'LineWidth' , 3)
+                end
+                line([100 100] , [220 270],'color' , 'black' , 'LineWidth' , 5)
+                text(60,245,'50','FontSize' , 16 )
+                xlabel('Norm Time')
+%                 ylabel('Baseline-Normalized Power')
+                figCount = figCount + 1;
+            end
+        end
+        

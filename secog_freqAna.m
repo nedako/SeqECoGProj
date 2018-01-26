@@ -37,7 +37,6 @@ for bn = 1:length(BN)
             for fi=1:num_frex
                 
                 wavelet = fft( sqrt(1/(s(fi)*sqrt(pi))) * exp(2*1i*pi*frex(fi).*time) .* exp(-time.^2./(2*(s(fi)^2))) , n_conv_pow2 );
-                
                 % convolution
                 eegconv = ifft(wavelet.*eegfft);
                 eegconv = eegconv(1:n_convolution);
@@ -47,7 +46,6 @@ for bn = 1:length(BN)
             end
             disp(['Trial ' , num2str(tn) , ' , Channel ' , num2str(ch)])
         end
-        
     end
     fname1 = ['PSD_b',num2str(bn),'_P1_Sep14.mat'];
     fname2 = 'Pall';

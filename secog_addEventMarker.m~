@@ -37,17 +37,32 @@ switch what
             elseif isfield(Dall , 'PSD')
                 eegTime = size(Dall.PSD{i} , 3);
             end
-            
+            Dall.AllPressIdx(i ,:) = (Dall.AllPressTimes(i,:)/1000)*Fs;
+            Dall.EEGEventTime(i , :) = (Dall.AllPressTimes(i,:) +500)/1000; % because we chopp EEG 500 ms before the stim comes on'
+            EEGEventidx = floor(Dall.EEGEventTime(i , :)* Fs); 
+            EEGEventidx =  [Fs/2 , EEGEventidx ];
+            NEEGEventidx = [EEGEventidx , length()/(max(EEGEventidx)+(Fs/2))
+            for pr = 1:length(EEGEventidx)
+                E.EventMarker{i , 1}(EEGEventidx(pr)) = pr;  % First press
+                E.NormEventMarker{i , 1}(end - Nidx) = pr;
+            end
             if Dall.TN(i)>2 && ~Dall.isError(i)
-                Dall.AllPressIdx(i ,:) = (Dall.AllPressTimes(i,:)/1000)*Fs;
-                Dall.EEGEventTime(i , :) = (Dall.AllPressTimes(i,:) +500)/1000; % because we chopp EEG 500 ms before the stim comes on'
-                EEGEventidx = floor(Dall.EEGEventTime(i , :)* Fs);
-                EEGEventidx =  [Fs/2 , EEGEventidx ];
-                NEEGEventidx = floor([EEGEventidx/(max(EEGEventidx)+(Fs/2)) , 1]*NumWarpSamp);
-                for pr = 1:length(EEGEventidx)
-                    E.EventMarker{i , 1}(EEGEventidx(pr)) = pr-1;  % First press
-                    E.NormEventMarker{i , 1}(NEEGEventidx) = pr-1;
+                trialTime  = 0:1/Fs:(eegTime/Fs) - 1/Fs;
+                
+                E.EventMarker{i , 1} = zeros(size( trialTime));
+                E.NormEventMarker{i , 1} = zeros(NumWarpSamp,1);
+                for pr = 1:Dall.seqlength(i)
+                    numTaskSamp = floor(( Dall.AllPressIdx(i , Dall.seqlength(i)) - Dall.AllPressIdx(i , pr)) * (Fs/NumWarpSamp));
+                    idx = numTaskSamp + floor(Fs/2);
+                    Nidx = floor(idx*NumWarpSamp/length(trialTime));
+                    E.EventMarker{i , 1}(end - idx) = pr;  % First press
+                    E.NormEventMarker{i , 1}(end - Nidx) = pr;
                 end
+                % stimulus appears
+                idx = floor(Fs/2);
+                E.EventMarker{i , 1}(idx) = -1;       
+                Nidx = floor(idx*NumWarpSamp/length(trialTime));
+                E.NormEventMarker{i , 1}(Nidx) = -1;
             else
                 trialTime  = 0:1/Fs:(eegTime/Fs) - 1/Fs;
                 

@@ -44,9 +44,6 @@ end
 if ~exist('numFreqBins')
     numFreqBins = 90;
 end
-if ~exist('numTrials')
-    numTrials = 1000;
-end
 if ~exist('DownsampleRate')
     DownsampleRate = 1;
 end
