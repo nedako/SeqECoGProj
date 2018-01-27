@@ -30,54 +30,27 @@ Dout.blockGroupNames = {'SingleFingNat' , 'SingleFingSlow' , 'SingleFingFast' , 
 switch what
     case 'addEvent'
         %% find the non-normal and normal event marker and averages
-        % can be performed on individual blocks or trails 
+        % can be performed on individual blocks or trails
         for i = 1:length(Dall.TN)
+            i
             if isfield(Dall , 'EEG')
                 eegTime = length(Dall.EEG{i});
             elseif isfield(Dall , 'PSD')
                 eegTime = size(Dall.PSD{i} , 3);
             end
-            Dall.AllPressIdx(i ,:) = (Dall.AllPressTimes(i,:)/1000)*Fs;
-            Dall.EEGEventTime(i , :) = (Dall.AllPressTimes(i,:) +500)/1000; % because we chopp EEG 500 ms before the stim comes on'
-            EEGEventidx = floor(Dall.EEGEventTime(i , :)* Fs); 
-            EEGEventidx =  [Fs/2 , EEGEventidx ];
-            NEEGEventidx = [EEGEventidx , length()/(max(EEGEventidx)+(Fs/2))
-            for pr = 1:length(EEGEventidx)
-                E.EventMarker{i , 1}(EEGEventidx(pr)) = pr;  % First press
-                E.NormEventMarker{i , 1}(end - Nidx) = pr;
+            % add 500 ms to the event times because we chopp EEG 200 ms before the stim comes on'
+            % EEGEventTime will contain [0 ,  time the stimulus comes on(200 ms mark) , event times(if any) ,
+            % time the stimulus goes off (simultaneous to the last press) , endtime (200ms after the stim goes off)]
+            EEGEventTime = [0 .2 , (Dall.AllPressTimes(i,~isnan(Dall.AllPressTimes(i,:))) +500)/1000 , (eegTime/Fs)-.2 eegTime/Fs];
+            EEGEventidx = floor(EEGEventTime* Fs);
+            % warp the events to the interval of interest.
+            NEEGEventidx = floor([EEGEventidx/max(EEGEventidx), 1]*NumWarpSamp);
+            for pr = 2:length(EEGEventidx)-1
+                E.EventMarker{i , 1}(EEGEventidx(pr)) = pr-2;  % First press 
+                E.NormEventMarker{i , 1}(NEEGEventidx(pr)) = pr-2;
             end
-            if Dall.TN(i)>2 && ~Dall.isError(i)
-                trialTime  = 0:1/Fs:(eegTime/Fs) - 1/Fs;
-                
-                E.EventMarker{i , 1} = zeros(size( trialTime));
-                E.NormEventMarker{i , 1} = zeros(NumWarpSamp,1);
-                for pr = 1:Dall.seqlength(i)
-                    numTaskSamp = floor(( Dall.AllPressIdx(i , Dall.seqlength(i)) - Dall.AllPressIdx(i , pr)) * (Fs/NumWarpSamp));
-                    idx = numTaskSamp + floor(Fs/2);
-                    Nidx = floor(idx*NumWarpSamp/length(trialTime));
-                    E.EventMarker{i , 1}(end - idx) = pr;  % First press
-                    E.NormEventMarker{i , 1}(end - Nidx) = pr;
-                end
-                % stimulus appears
-                idx = floor(Fs/2);
-                E.EventMarker{i , 1}(idx) = -1;       
-                Nidx = floor(idx*NumWarpSamp/length(trialTime));
-                E.NormEventMarker{i , 1}(Nidx) = -1;
-            else
-                trialTime  = 0:1/Fs:(eegTime/Fs) - 1/Fs;
-                
-                E.EventMarker{i , 1} = zeros(size( trialTime));
-                E.NormEventMarker{i , 1} = zeros(NumWarpSamp,1);
-                idx = floor(Fs/2);
-                E.EventMarker{i , 1}(idx) = -1;       % equivalent to stimulus apears (because we take .5sec before the stim appears)
-                Nidx = floor(idx*NumWarpSamp/length(trialTime));
-                E.NormEventMarker{i , 1}(Nidx) = -1;
-                
-                idx = floor(Fs/2);
-                Nidx = floor(idx*NumWarpSamp/length(trialTime));
-                E.EventMarker{i , 1}(end - idx) = 7;  % equivalent to last press (because we take .5sec after the trail's over)
-                E.NormEventMarker{i , 1}(end - Nidx) = 7;
-            end
+            E.EventMarker{i , 1}(EEGEventidx(2)) = -1;  % First press
+            E.NormEventMarker{i , 1}(NEEGEventidx(2)) = -1;
         end
         Dall.EventMarker = E.EventMarker;
         Dall.NormEventMarker = E.NormEventMarker;
@@ -86,57 +59,44 @@ switch what
         
         %% Calculating the average pattern
         Dall  = secog_addEventMarker(Dall, subjNum, Fs , 'addEvent')';
-        % single finger blocks that participant is instructed to go slow 
-        slowSingleFing = [3 13 26 40];
-        BNid_slow  = logical(sum(Dall.BN == slowSingleFing , 2));
-        Dall.seqNumb(BNid_slow) = Dall.seqNumb(BNid_slow)*10;
-        
-        % single finger blocks that participant is instructed to go fast as she can
-        fastSingleFing = [4 14 27 41];
-        BNid_fast  = logical(sum(Dall.BN == fastSingleFing , 2));
-        Dall.seqNumb(BNid_fast) = Dall.seqNumb(BNid_fast)*100;
-        
-        
+
         % we want the average pattern to be calculated across the groups of 3 block of seq training in between the chunk training blocks
         % this should be defined for every participant
-        
-        
+
         for BG = 1:length(Dout.blockGroups)
             D1 = getrow(Dall , ~Dall.isError & ismember(Dall.BN , Dout.blockGroups{BG}));
             Dout.SN{BG,1} = unique(D1.seqNumb);
-            Dout.SN{BG,1} = Dout.SN{BG,1}(~ismember(Dout.SN{BG,1} , [5 50 500])); % exclude the stars
+            Dout.SN{BG,1} = Dout.SN{BG,1};%(~ismember(Dout.SN{BG,1} , [5 50 500])); % exclude the stars
             for sn= 1:length(Dout.SN{BG,1})
                 clear EventMarker NormEventMarker EM NEM diffNEM
                 EventMarker = [];
                 NormEventMarker = [];
+                D = getrow(D1 , ismember(D1.seqNumb , Dout.SN{BG,1}(sn)) & ~D1.isError & ismember(D1.BN , Dout.blockGroups{BG,1}));
+                D.seqlength(isnan(D.seqlength)) = 1;
+                SL = unique(D.seqlength);
                 Dout.EM{BG,1}(sn , :)= nan(1,max(Dall.seqlength)+1);
                 Dout.NEM{BG,1}(sn , :)= nan(1,max(Dall.seqlength)+1);
-                D = getrow(D1 , ismember(D1.seqNumb , Dout.SN{BG,1}(sn)) & ~D1.isError & ismember(D1.BN , Dout.blockGroups{BG,1}));
-                SL = unique(D.seqlength);
                 if ~isempty(D.TN)
                     for k = 1:length(D.TN)
                         temp = nan(1,max(Dall.seqlength)+1);
                         Ntemp = nan(1,max(Dall.seqlength)+1);
                         events = [-1 , 1:D.seqlength(k)];
-                        if D.TN(k) >3
-                            clear temp Ntemp
-                            for jj = 1:length(events)
-                                if  ~isempty(find(D.EventMarker{k} == events(jj)))
-                                    temp(1, jj) =  find(D.EventMarker{k} == events(jj));
-                                else
-                                    temp(1, jj) = NaN;
-                                end
-                                if ~isempty(find(D.NormEventMarker{k} == events(jj)))
-                                    Ntemp(1,jj) =  find(D.NormEventMarker{k} == events(jj));
-                                else
-                                    Ntemp(1,jj) = NaN;
-                                end
+                        clear temp Ntemp
+                        for jj = 1:length(events)
+                            if  ~isempty(find(D.EventMarker{k} == events(jj)))
+                                temp(1, jj) =  find(D.EventMarker{k} == events(jj));
+                            else
+                                temp(1, jj) = NaN;
                             end
-                            EventMarker = [EventMarker; temp];
-                            NormEventMarker = [NormEventMarker ;Ntemp];
+                            if ~isempty(find(D.NormEventMarker{k} == events(jj)))
+                                Ntemp(1,jj) =  find(D.NormEventMarker{k} == events(jj));
+                            else
+                                Ntemp(1,jj) = NaN;
+                            end
                         end
+                        EventMarker = [EventMarker; temp];
+                        NormEventMarker = [NormEventMarker ;Ntemp];
                     end
-                    
                 end
                 Dout.EM{BG,1}(sn , 1:SL+1) = floor(nanmean(EventMarker));
                 Dout.NEM{BG,1}(sn ,1:SL+1) = floor(nanmean(NormEventMarker));

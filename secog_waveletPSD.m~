@@ -64,10 +64,10 @@ n_conv_pow2          = pow2(nextpow2(n_convolution));
 half_of_wavelet_size = (n_wavelet-1)/2;
 % get FFT of data
 eegfft = fft(EEG,n_conv_pow2);
-BandInfo.bandsLab = {'Delta <4Hz' , 'Theta 4-8Hz' , 'Alpha 8-13Hz' , 'L-Beta 13-24Hz' , 'H-Beta 24-36Hz' , 'L-Gamma 36-48Hz' , 'H-Gamma >48Hz'};
-BandInfo.bands = {[0 4], [4 8] [8 13] [13 24] [14 36] [36 48] [48 110]};
-for b = 1:length(BandInfo.bands)
-    BandInfo.bandid{b} = [find(frex>BandInfo.bands{b}(1) ,1, 'first') , find(frex<BandInfo.bands{b}(2) ,1, 'last')];
+bandsLab = {'Delta <4Hz' , 'Theta 4-8Hz' , 'Alpha 8-13Hz' , 'L-Beta 13-24Hz' , 'H-Beta 24-36Hz' , 'L-Gamma 36-48Hz' , 'H-Gamma >48Hz'};
+bands = {[0 4], [4 8] [8 13] [13 24] [14 36] [36 48] [48 110]};
+for b = 1:length(bands)
+    bandid{b} = [find(frex>bands{b}(1) ,1, 'first') , find(frex<bands{b}(2) ,1, 'last')];
 end
 
 for fi=1:numFreqBins
@@ -84,9 +84,9 @@ end
 if AvgOverBand
     temp = PSD;
     clear PSD
-    for b =1:length(BandInfo.bandid)
-        PSD(b, :) =  nanmean(temp(BandInfo.bandid{b}(1) : BandInfo.bandid{b}(2),:));
+    for b =1:length(bandid)
+        PSD(b, :) =  nanmean(temp(bandid{b}(1) : bandid{b}(2),:));
     end
 else
-    BandInfo.bandsLab = [];
+    bandsLab = [];
 end

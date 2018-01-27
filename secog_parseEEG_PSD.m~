@@ -96,21 +96,8 @@ switch what
             start_tr = find(marker == 1); % starts of trials
             end_tr = find(marker == -1);  % ends of trials
             for tn = 1:length(start_tr)
-                % the key press trials
-                if tn>2
-                    D.EEG{tn ,1}       = Beeg.values(: , start_tr(tn)-floor(Fs/2) : end_tr(tn)+floor(Fs/2));
-                    D.timeStim{tn ,1}  = 0:1/Fs:(length(D.EEG{tn ,1})/Fs) - 1/Fs;
-                    D.timeStim{tn ,1}  = D.timeStim{tn ,1}-(500/Fs);
-                    % convert the time of the forst press from hand to eeg
-                    tp = floor(Fs/5) + floor(Fs*(D.pressTime0(tn)/1000));
-                    D.timePress{tn ,1} = 0:1/Fs:(length(D.EEG{tn ,1})/Fs) - 1/Fs;
-                    D.timePress{tn ,1}  = D.timePress{tn ,1}-(tp/Fs);
-                    % the 2 idle trials at the beggining
-                else
-                    D.EEG{tn ,1} = Beeg.values(: , start_tr(tn) : end_tr(tn));
-                    D.timeStim{tn ,1} = 0:1/Fs:(length(D.EEG{tn ,1})/Fs) - 1/Fs;
-                    D.timePress{tn ,1} = 0:1/Fs:(length(D.EEG{tn ,1})/Fs) - 1/Fs;
-                end
+                % take 200 ms before and after the stim come on and goes off
+                D.EEG{tn ,1}       = Beeg.values(: , start_tr(tn)-floor(Fs/5) : end_tr(tn)+floor(Fs/5));
                 [i tn]
             end
             Dout = addstruct(Dout , D);
@@ -189,7 +176,7 @@ switch what
             start_tr = find(marker == 1); % starts of trials
             end_tr = find(marker == -1);  % ends of trials
             for ch = 1:size(Beeg.values , 1)
-                statement = ['RawEEGpower',num2str(ch),'= secog_waveletPSD(Beeg.values(ch , :) , Fs , ''DownsampleRate'' , DownsampleRate);'];
+                statement = ['[RawEEGpower',num2str(ch),' , BandInfo] = secog_waveletPSD(Beeg.values(ch , :) , Fs , ''DownsampleRate'' , DownsampleRate);'];
                 eval(statement);
                 disp(['PSD calculation for block ' , num2str(i) , ', channel ' , num2str(ch) , ' completed'])
             end
@@ -199,13 +186,58 @@ switch what
             for tn = 1 :length(start_tr)
                 clear Pow_Norm_stim Pow_Norm_pres Pow_non_norm idx PP PEEG
                 % stack up the channles
-                % take  half a sec before the stim apears and half a sec after the stimulus goes away into account
+                % take 200 msec before the stim apears and half a sec after the stimulus goes away into account
                 for ch = 1:size(Beeg.values , 1)
-                    statement1 = ['D.PSD{tn,1}(ch , :,:)  = RawEEGpower',num2str(ch),'(: , start_tr(tn)-floor(Fs_ds/2) : end_tr(tn)+floor(Fs_ds/2));'];
+                    statement1 = ['D.PSD{tn,1}(ch , :,:)  = RawEEGpower',num2str(ch),'(: , start_tr(tn)-floor(Fs_ds/5) : end_tr(tn)+floor(Fs_ds/5));'];
                     eval(statement1);
                 end
             end
+            % save the un-banded version block by block
+            
+            clear D
+            %% find the event markers and normalize the power to 200 ms before the stimulus came on - or press
+            Pall  = secog_addEventMarker(Pall, subjNum, Fs_ds , 'addEvent' , 'NumWarpSamp' , NumWarpSamp)';
+            for tn = 1 :length(start_tr)
+                A = Pall.PSD{tn};
+                if Pall.TN(tn)>2
+                    for ch = 1:size(A,1)
+                        for fi=1:size(A,2)
+                            switch NormType
+                                case 'stim'
+                                    Pall.Pow_Norm_stim{tn,1}(ch,fi,:) = squeeze(10*log10(A(ch,fi,:)./mean(A(ch,fi,1:find(Pall.EventMarker{tn ,1} == -1)))));
+                                case 'press'
+                                    Pall.Pow_Norm_pres{tn,1}(ch,fi,:)      = squeeze(10*log10(A(ch,fi,:)./mean(A(ch,fi,1:find(Pall.EventMarker{tn ,1} == 1)))));
+                                case 'none'
+                                    Pall.Pow_non_norm{tn,1}(ch,fi,:)       = squeeze(10*log10(A(ch,fi,:)));
+                            end
+                        end
+                    end
+                else
+                    for ch = 1:size(A,1)
+                        for fi=1:size(A,2)
+                            switch NormType
+                                case {'stim' , 'press'}
+                                    Pall.Pow_Norm_stim{tn,1}(ch,fi,:) = squeeze(10*log10(A(ch,fi,:)./mean(A(ch,fi,1:find(Pall.EventMarker{tn ,1} == -1)))));
+                                case 'none'
+                                    Pall.Pow_non_norm{tn,1}(ch,fi,:)       = squeeze(10*log10(A(ch,fi,:)));
+                            end
+                        end
+                    end
+                end
+            end
+            %%
+            
+            saveName = [saveDir,'Raw_PSD_B',num2str(i) ,'.mat'];
+            save(saveName , 'Pall' , '-v7.3');
+            % then band-average and stack up
+            for tn = 1 :length(start_tr)
+                temp = Pall.Pow_Norm_stim{tn};
+                for b =1:length(BandInfo.bandid)
+                    D.PSD{tn,1}(:,b, :) =  nanmean(temp(:,BandInfo.bandid{b}(1) : BandInfo.bandid{b}(2),:) , 2);
+                end
+            end
             Dout = addstruct(Dout , D);
+            clear D
         end
         Dall = Dout;
         clear Dout;
