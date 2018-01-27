@@ -7,8 +7,8 @@ while(c<=length(varargin))
         
         case {'NormType'}
             % Type of PSD normalization
-            % Default : 'stim' normalize power to 500 ms before the stimulation comes on
-            % could be 'press' normalizez to 500 ms before the stim comes on + the time before the first press
+            % Default : 'stim' normalize power to 200 ms before the stimulation comes on
+            % could be 'press' normalizez to 200 ms before the stim comes on + the time before the first press
             % could be 'none' which just transforms PSD into logarithmic scale
             eval([varargin{c} '= varargin{c+1};']);
             c=c+2;
@@ -193,14 +193,48 @@ switch what
                 end
             end
             % save the un-banded version block by block
+            
+            clear D
+            %% find the event markers and normalize the power to 200 ms before the stimulus came on - or press
+            Pall  = secog_addEventMarker(Pall, subjNum, Fs_ds , 'addEvent' , 'NumWarpSamp' , NumWarpSamp)';
+            for tn = 1 :length(start_tr)
+                A = Pall.PSD{tn};
+                if Pall.TN(tn)>2
+                    for ch = 1:size(A,1)
+                        for fi=1:size(A,2)
+                            switch NormType
+                                case 'stim'
+                                    Pall.Pow_Norm_stim{tn,1}(ch,fi,:) = squeeze(10*log10(A(ch,fi,:)./mean(A(ch,fi,1:find(Pall.EventMarker{tn ,1} == -1)))));
+                                case 'press'
+                                    Pall.Pow_Norm_pres{tn,1}(ch,fi,:)      = squeeze(10*log10(A(ch,fi,:)./mean(A(ch,fi,1:find(Pall.EventMarker{tn ,1} == 1)))));
+                                case 'none'
+                                    Pall.Pow_non_norm{tn,1}(ch,fi,:)       = squeeze(10*log10(A(ch,fi,:)));
+                            end
+                        end
+                    end
+                else
+                    for ch = 1:size(A,1)
+                        for fi=1:size(A,2)
+                            switch NormType
+                                case {'stim' , 'press'}
+                                    Pall.Pow_Norm_stim{tn,1}(ch,fi,:) = squeeze(10*log10(A(ch,fi,:)./mean(A(ch,fi,1:find(Pall.EventMarker{tn ,1} == -1)))));
+                                case 'none'
+                                    Pall.Pow_non_norm{tn,1}(ch,fi,:)       = squeeze(10*log10(A(ch,fi,:)));
+                            end
+                        end
+                    end
+                end
+            end
+            %%
+            
             saveName = [saveDir,'Raw_PSD_B',num2str(i) ,'.mat'];
-            Pall = D;
             save(saveName , 'Pall' , '-v7.3');
-             % then band-average and stack up
-            temp = Pall;
-            clear Pall
-            for b =1:length(BandInfo.bandid)
-                PSD(b, :) =  nanmean(temp(BandInfo.bandid{b}(1) : BandInfo.bandid{b}(2),:));
+            % then band-average and stack up
+            for tn = 1 :length(start_tr)
+                temp = Pall.Pow_Norm_stim{tn};
+                for b =1:length(BandInfo.bandid)
+                    D.PSD{tn,1}(:,b, :) =  nanmean(temp(:,BandInfo.bandid{b}(1) : BandInfo.bandid{b}(2),:) , 2);
+                end
             end
             Dout = addstruct(Dout , D);
             clear D

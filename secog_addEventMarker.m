@@ -38,7 +38,7 @@ switch what
             elseif isfield(Dall , 'PSD')
                 eegTime = size(Dall.PSD{i} , 3);
             end
-            % add 500 ms to the event times because we chopp EEG 200 ms before the stim comes on'
+            % add 200 ms to the event times because we chopp EEG 200 ms before the stim comes on'
             % EEGEventTime will contain [0 ,  time the stimulus comes on(200 ms mark) , event times(if any) ,
             % time the stimulus goes off (simultaneous to the last press) , endtime (200ms after the stim goes off)]
             if Dall.TN(i)>2
@@ -70,7 +70,7 @@ switch what
         for BG = 1:length(Dout.blockGroups)
             D1 = getrow(Dall , ~Dall.isError & ismember(Dall.BN , Dout.blockGroups{BG}));
             Dout.SN{BG,1} = unique(D1.seqNumb);
-            Dout.SN{BG,1} = Dout.SN{BG,1};%(~ismember(Dout.SN{BG,1} , [5 50 500])); % exclude the stars
+            Dout.SN{BG,1} = Dout.SN{BG,1};
             for sn= 1:length(Dout.SN{BG,1})
                 clear EventMarker NormEventMarker EM NEM diffNEM
                 EventMarker = [];
