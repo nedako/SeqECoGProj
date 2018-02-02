@@ -66,7 +66,7 @@ switch what
     case 'binned_BlockGroup'
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Pall, subjNum);
         Dall.PSD_stim = Pall.PSD_stim;
         Pall = Dall;
         Pall.Fast = zeros(size(Pall.TN));
@@ -105,11 +105,11 @@ switch what
         Pall = Dall;
         Pall.Fast = zeros(size(Pall.TN));
         E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
-        E.NumWarpSamp([1 2 3 6 10 14]) = NumWarpSampFast;
-        fastBlock = horzcat(blockGroups{1} , blockGroups{2} , blockGroups{3} , blockGroups{6}, blockGroups{10},blockGroups{14});
+        E.NumWarpSamp([1 3 6 10 14]) = NumWarpSampFast;
+        fastBlock = horzcat(blockGroups{1} , blockGroups{3} , blockGroups{6}, blockGroups{10},blockGroups{14});
         Pall.Fast(ismember(Pall.BN , fastBlock)) = 1;
         P = [];
-        for BG = 1:length(blockGroups)
+        for BG = 2%3:length(blockGroups)
             for bn = 1:length(E.blockGroups{BG})
                 BN = E.blockGroups{BG}(bn);
                 filename = [mainDir ,  'warped_PSD_B' , num2str(BN),'.mat'];

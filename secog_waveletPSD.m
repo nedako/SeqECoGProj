@@ -78,7 +78,7 @@ for fi=1:numFreqBins
     eegconv = eegconv(1:n_convolution);
     eegconv = eegconv(half_of_wavelet_size+1:end-half_of_wavelet_size);
     % assign a separate array to every chanle since for longer recordings the array size exceds the Matlab limit
-    PSD(fi,:) = downsample(mean(abs(reshape(eegconv,n_data,1)).^2,2)' , DownsampleRate);
+    PSD(fi,:) = downsample(nanmean(real(reshape(eegconv,n_data,1)).^2,2)' , DownsampleRate);
 end
 
 if AvgOverBand

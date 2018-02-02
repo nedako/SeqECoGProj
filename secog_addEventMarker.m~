@@ -68,13 +68,15 @@ switch what
             % EEGEventTime will contain [0 ,  time the stimulus comes on(TimeDelay ms mark) , event times(if any) ,
             % time the stimulus goes off (simultaneous to the last press) , endtime (TimeDelayms after the stim goes off)]
             if Dall.TN(i)>2
-                mark = ((Dall.AllPressTimes(i,~isnan(Dall.AllPressTimes(i,:))))/1000 + TimeDelay)*Fs;
-                EEGEventidx = floor([0 TimeDelay*Fs , mark , eegTime]);
+                mark = (Dall.AllPressTimes(i,~isnan(Dall.AllPressTimes(i,:))))/1000 + TimeDelay;
+                EEGEventTime = [0 TimeDelay , mark , eegTime/Fs];
             else
                 mark = (Dall.AllPressTimes(i,~isnan(Dall.AllPressTimes(i,:))))/1000 + TimeDelay;
-                EEGEventidx = floor([0 TimeDelay*Fs , eegTime - 2*TimeDelay*Fs  eegTime]);
+                EEGEventTime = [0 TimeDelay , eegTime - 2*TimeDelay*1024  eegTime];
             end
+            EEGEventidx = floor(EEGEventTime* Fs);
             % warp the events to the interval of interest.
+
             NEEGEventidx = floor([EEGEventidx/max(EEGEventidx)]*NumWarpSamp);
 
             for pr = 3:length(EEGEventidx)-1
@@ -90,13 +92,11 @@ switch what
     case 'CalcAveragePattern'
         
         %% Calculating the average pattern
-        % the input to this case in the completed Bahavioral data with the
-        % real and normalized time stamps.
-        % this would be the saved structure throught 
-        % Dout = secog_parseEEG_PSD('ParseEEG-calcPSD' , Dall, 1); undeer AllData_Events.mat 
+        Dall  = secog_addEventMarker(Dall, subjNum, Fs , 'addEvent')';
+
         % we want the average pattern to be calculated across the groups of 3 block of seq training in between the chunk training blocks
         % this should be defined for every participant
-        
+
         for BG = 1:length(Dout.blockGroups)
             D1 = getrow(Dall , ~Dall.isError & ismember(Dall.BN , Dout.blockGroups{BG}));
             Dout.SN{BG,1} = unique(D1.seqNumb);
@@ -117,13 +117,13 @@ switch what
                         events = [-1 , 1:D.seqlength(k)];
                         clear temp Ntemp
                         for jj = 1:length(events)
-                            if  ~isempty(find(D.RealTime{k} == events(jj)))
-                                temp(1, jj) =  find(D.RealTime{k} == events(jj));
+                            if  ~isempty(find(D.EventMarker{k} == events(jj)))
+                                temp(1, jj) =  find(D.EventMarker{k} == events(jj));
                             else
                                 temp(1, jj) = NaN;
                             end
-                            if ~isempty(find(D.NormTime{k} == events(jj)))
-                                Ntemp(1,jj) =  find(D.NormTime{k} == events(jj));
+                            if ~isempty(find(D.NormEventMarker{k} == events(jj)))
+                                Ntemp(1,jj) =  find(D.NormEventMarker{k} == events(jj));
                             else
                                 Ntemp(1,jj) = NaN;
                             end

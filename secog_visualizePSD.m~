@@ -1,5 +1,6 @@
 function secog_visualizePSD(Pall , subjNum, what,varargin)
-
+% for patient 2: 
+%       SMA channels:         
 subjname = {'P2'};
 c = 1;
 while(c<=length(varargin))
@@ -115,7 +116,86 @@ switch what
             text(median(EM),max(B),'5','FontSize' , 16 )
             set(gca ,'FontSize' , 16,'Box' , 'off')
         end
+        
+    case 'binned_SingleTrial_AvgChann'
+        % input to this has to be AllData_PSD_StimNorm.mat
+        Pall  = secog_addEventMarker(Pall, subjNum, Fs_ds , 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
+        D = getrow(Pall , Pall.BN == TBNum(2) & Pall.TN == TBNum(1));
+        time = [1:size(D.Pow_Norm_stim{1} , 3)]/Fs_ds;
+        figure('color' , 'white')
+        Pow = abs(squeeze(D.Pow_Norm_stim{1}));
+        EM = find(D.EventMarker{1})/Fs_ds;
+        for b =1:length(bandsLab)
+            B = abs(squeeze(mean(Pow(Chan2Plot , b , :),1))+8*b);
+            plot(time , B , 'LineWidth' , 3)
+            hold on
+            T(b) = nanmean(B);
+        end
+        title (['Raw PSD for ',num2str(D.AllPress(1,:))])
+        for lin = 1:length(EM)
+            line([EM(lin) EM(lin)] , [0 max(B)] , 'color' , 'red' , 'LineStyle' , ':' , 'LineWidth' , 3)
+        end
+        xlabel('Norm Time')
+        
+        set(gca , 'YTickLabels' , bandsLab, 'YTick' , T );
+        
+        line([median(EM) median(EM)] , [max(B)-5 max(B)],'color' , 'black' , 'LineWidth' , 5)
+        text(median(EM),max(B),'5','FontSize' , 16 )
+        set(gca ,'FontSize' , 16,'Box' , 'off')
         %% PLOT average normalized binned power
+    case 'binned_BlockGroup_AvgChann'
+        % Pall needs to be the structure containing time normalized, average
+        % Pall is the AllData_PSD_Warped.mat
+        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        
+        Dall.PSD_stim = Pall.PSD_stim;
+        Pall = Dall;
+        Pall.Fast = zeros(size(Pall.TN));
+        E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
+        E.NumWarpSamp([1 2 3 6 10 14]) = NumWarpSampFast;
+        E = getrow(E , strcmp(E.blockGroupNames , BlockGroup));
+        if isempty(E.EM)
+            error('Nothing to plot!')
+        end
+        fastBlock = horzcat(blockGroups{1} , blockGroups{2} , blockGroups{3} , blockGroups{6}, blockGroups{10},blockGroups{14});
+        Pall.Fast(ismember(Pall.BN , fastBlock)) = 1;
+        clear Dall
+        figure('color' , 'white')
+        figCount = 1;
+        for sn = 1:length(E.SN{1})
+            NEM = E.NEM{1}(sn , :);
+            id = ismember(Pall.BN , E.blockGroups{1}) & ismember(Pall.seqNumb , E.SN{1}(sn));
+            F = getrow(Pall , id);
+            % sum the warped PSDs insife the F structure
+            tcount = 1;
+            for tn = 1:length(F.PSD_stim)
+                if isequal(size(F.PSD_stim{tn}) ,[length(ChanLabels) , length(bandsLab) , E.NumWarpSamp])
+                    tempPow(tcount , :,:,:) = F.PSD_stim{tn};
+                    tcount = tcount +1;
+                end
+            end
+            AvgPow{sn} = abs(squeeze(nanmean(tempPow , 1)));
+            
+            subplot(length(E.SN{1}) ,1, figCount)
+            for b =1:length(bandsLab)
+                B  = squeeze(mean(AvgPow{sn}(Chan2Plot , b , :) , 1))+7*b;
+                plot([1:E.NumWarpSamp] , B , 'LineWidth' , 3)
+                T(b) = nanmean(B);
+                hold on
+            end
+            hold off
+            title (['Average Time-Warped PSD for ' ,E.blockGroupNames{1}])
+            for lin = 1:length(NEM)
+                line([NEM(lin) NEM(lin)] , [0 max(B)] , 'color' , 'red' , 'LineStyle' , ':' , 'LineWidth' , 3)
+            end
+            xlabel('Norm Time')
+            set(gca ,'YTickLabels' , bandsLab, 'YTick' , T );
+            
+            line([median(NEM) median(NEM)] , [max(B)-5 max(B)],'color' , 'black' , 'LineWidth' , 5)
+            text(median(NEM),max(B),'5','FontSize' , 16 )
+            set(gca , 'XLim' , [1 E.NumWarpSamp] ,'FontSize' , 16,'Box' , 'off')
+            figCount = figCount + 1;
+        end
     case 'binned_BlockGroup'
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
@@ -189,6 +269,7 @@ switch what
             subplot(length(Chan2Plot),1, ch)
             B = abs(squeeze(D.Pow_Norm_stim{1}(ch,:,:)));
             contourf(time,frex,B,60,'linecolor','none')
+            caxis([-15 7])
             title (['Raw PSD for ',num2str(D.AllPress(1,:)) ', in Channel ' , ChanLabels{Chan2Plot(ch)}])
             for lin = 1:length(EM)
                 line([EM(lin) EM(lin)] , [0 max(frex)] , 'color' , 'red' , 'LineStyle' , ':' , 'LineWidth' , 3)
@@ -221,6 +302,7 @@ switch what
                 subplot(length(E.SN{1}) ,length(Chan2Plot), figCount)
                 B = abs(squeeze(Pall.AvgPow{sn}(ch,:,:)));
                 contourf([1:E.NumWarpSamp],frex,B,60,'linecolor','none')
+                caxis([0 7])
                 title (['Raw PSD for SeqNumb =  ', num2str(E.SN{1}(sn)),', in Channel ' , ChanLabels{Chan2Plot(ch)}])
                 hold on
                 for lin = 1:length(NEM)
@@ -234,6 +316,42 @@ switch what
                 
                 figCount = figCount + 1;
             end
+        end
+        
+    case 'raw_BlockGroup_AvgChann'
+        % Pall needs to be the structure containing time normalized, average
+        % Pall is the AllData_PSD_Warped.mat
+        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
+        BG = find(strcmp(E.blockGroupNames , BlockGroup));
+        E.NumWarpSamp([1 2 3 6 10 14]) = NumWarpSampFast;
+        E = getrow(E , BG);
+        if isempty(E.EM)
+            error('Nothing to plot!')
+        end
+        
+        filename = [mainDir ,  'AverageRawPSD' , num2str(BG),'.mat'];
+        load(filename)
+        figure('color' , 'white')
+        figCount = 1;
+        for sn = 1:length(E.SN{1})
+            NEM = E.NEM{1}(sn , :);
+            subplot(length(E.SN{1}) ,1, figCount)
+            B = squeeze(abs(mean(Pall.AvgPow{sn}(Chan2Plot,:,:) , 1)));
+            contourf([1:E.NumWarpSamp],frex,B,60,'linecolor','none')
+            caxis([0 7])
+            title (['Raw PSD for SeqNumb =  ', num2str(E.SN{1}(sn))])
+            hold on
+            for lin = 1:length(NEM)
+                line([NEM(lin) NEM(lin)] , [0  max(frex)] , 'color' , 'red' , 'LineStyle' , ':' , 'LineWidth' , 3)
+            end
+            xlabel('Norm Time')
+            
+            ylabel('Frequency (Hz)')
+            
+            set(gca ,'FontSize' , 16,'Box' , 'off')
+            
+            figCount = figCount + 1;
         end
       
 end
