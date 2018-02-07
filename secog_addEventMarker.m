@@ -133,7 +133,7 @@ switch what
                     end
                 end
                 Dout.EM{BG,1}(sn , 1:SL+1) = floor(nanmean(EventMarker));
-                Dout.NEM{BG,1}(sn ,1:SL+1) = floor(nanmean(NormEventMarker));
+                Dout.NEM{BG,1}(sn ,1:SL+1) = floor(nanmin(NormEventMarker));
             end
         end
 end

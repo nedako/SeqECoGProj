@@ -39,6 +39,10 @@ while(c<=length(varargin))
             % default  = 90
             eval([varargin{c} '= varargin{c+1};']);
             c=c+2;
+        case {'Channels'}
+            % channels of interest Default : everythig
+            eval([varargin{c} '= varargin{c+1};']);
+            c=c+2;
         otherwise
             error(sprintf('Unknown option: %s',varargin{c}));
     end
@@ -64,6 +68,9 @@ if ~exist('FreqRange')
 end
 if ~exist('numFreqBins')
     numFreqBins = 75;
+end
+if ~exist('Channels')
+    Channels = [1:129];
 end
 
 % specify which block and trial are fast and which are slow
@@ -179,7 +186,8 @@ switch what
         % periodogram(filt_A(1,:),[],length(filt_A(1,:)),Fs,'power')
     case 'ParseEEG-calcPSD'
          %% preprocess EEG and filtering
-        
+        load([saveDir , 'ChanLabels.mat']);
+        ChanLabels = ChanLabels(Channels);
         % Q : quality factor is the center frequency divided by the bandwidth.
         % Q = 35;
         % BW = Fo/(Fs/2);
@@ -198,10 +206,7 @@ switch what
         tn = 1;
         load(fName1);
         
-        for ch = 1:size(Data.values , 1)
-            A = filter(b,a , Data.values(ch , :));
-            Data.values(ch , :) = filter(c,d , A);
-        end
+
         %% 
         Events = [];
         for i = 1:size(BlockInfo , 1)
@@ -218,8 +223,8 @@ switch what
             end
             %     extract the data for the block at hand
             BlockRang = [BlockInfo{i,2} : BlockInfo{i,3}];
-            Beeg = Data;
-            Beeg.values = Data.values(: , BlockRang);
+            Beeg = getrow(Data , Channels);
+            Beeg.values = Beeg.values(:,BlockRang);
             % get the indecies for starts ans ends of the trials
             marker = Beeg.values(find(strcmp(Beeg.label , 'TTL')) , :);
             marker = [0 diff(marker <-2*10^6)];
@@ -242,11 +247,11 @@ switch what
             for ch = 1:size(Beeg.values , 1)
                 Chname{ch} = ['RawEEGpower',num2str(ch)];
                 [REG, BandInfo] = secog_waveletPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate);
-                REG = real(REG);
+%                 REG = real(REG);
                 % normalize each trial to baseline : TimeDelay ms before the stim  onset
                 for tr = 1:length(start_tr)
-                    baseline = nanmean(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay):start_tr(tr)) , 2);
-                    X = REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay) : end_tr(tr)+floor(Fs_ds*2*TimeDelay));
+                    baseline = abs(nanmean(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay):start_tr(tr)) , 2));
+                    X = abs(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay) : end_tr(tr)+floor(Fs_ds*2*TimeDelay)));
                     X = (X - repmat(baseline , 1,size(X,2)))./repmat(baseline , 1,size(X,2));
                     statement1 = ['D.PSD{tr,1}(ch , :,:)  = X;'];
                     eval(statement1);
@@ -348,16 +353,27 @@ switch what
         % find average event markers
         E  = secog_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
         BN = unique(Events.BN);
-        Dout = [];
+        
         Pall_binned = [];
         for bn = 1:length(BN)
+            bg = 1;
+            mem = 0;
+            while mem == 0
+                if ismember(BN(bn) , E.blockGroups{bg})
+                    mem = 1;
+                    BG = bg;
+                end
+                bg = bg+1;
+            end
+            
+            clear D P
             D = getrow(Events , Events.BN == BN(bn));
             Bname = [saveDir,'Raw_PSD_B',num2str(bn) ,'.mat'];
-            load(Bname);
+            P = load(Bname);
             for tn = 1 :length(D.TN)
                 % prepare the individual trials to be saved as the
                 % fileds of a structre to make loading easier
-                eval(['D.Pow_Norm_stim{',num2str(tn),'} = PSD', num2str(tn), ';']);
+                eval(['D.Pow_Norm_stim{',num2str(tn),'} = P.PSD', num2str(tn), ';']);
             end
             % this loads up the data strutre where the raw PSD for that block is already stored 
             % 'ParseEEG-calcPSD'
@@ -370,17 +386,8 @@ switch what
             D.NumWarpSamp(logical(D.Fast)) = NumWarpSampFast;
             for tn = 1:length(D.TN)
                 if length(find(D.NormTime{tn})) == D.seqlength(tn) +1 & ~D.isError(tn) & length(D.RealTime{tn})>D.NumWarpSamp(tn)
-                    tn
                     % check which block group this block falls into
-                    bg = 1;
-                    mem = 0;
-                    while mem == 0
-                        if ismember(D.BN(tn) , E.blockGroups{bg})
-                            mem = 1;
-                            BG = bg;
-                        end
-                        bg = bg+1;
-                    end
+                    
                     A = nPSD{tn};
                     % the normalized event markers in trial tn
                     idx = [0 find(D.NormTime{tn}) D.NumWarpSamp(tn)];
@@ -402,18 +409,18 @@ switch what
                         idd   = linspace(1 , [idn(e)+1 - (idn(e-1) + 1)] , diffNEM(e-1));
                         for ch = 1:size(A,1)
                             for fi=1:size(A,2)
-                                Dout.PSD_stim{tn ,1}(ch,fi,idn(e-1)+1:idn(e)) = interp1([1:idx(e) - idx(e-1)] , squeeze(nPSD{tn}(ch,fi,idx(e-1)+1:idx(e))) , idd);
+                                idd = floor(linspace(1, length([1:idx(e) - idx(e-1)]) , length(idd)));
+                                D.PSD_stim{tn ,1}(ch,fi,idn(e-1)+1:idn(e)) = interp1([1:idx(e) - idx(e-1)] , squeeze(A(ch,fi,idx(e-1)+1:idx(e))) , idd);
                             end
                         end
                     end
                 else
-                    Dout.PSD_stim{tn ,1} = [];
+                    D.PSD_stim{tn ,1} = nan(size(A,1) , length(frex) , D.NumWarpSamp(tn));
                 end
             end
-            clear Pall
-            for tn = 1:length(Dout.PSD_stim)
+            for tn = 1:length(D.PSD_stim)
                 trialName = ['Pall.PSD',num2str(tn)];
-                eval([trialName, ' = Dout.PSD_stim{' , num2str(tn) , '};'])
+                eval([trialName, ' = D.PSD_stim{' , num2str(tn) , '};'])
             end
 
             saveName = [saveDir,'warped_PSD_B',num2str(bn) ,'.mat'];
@@ -423,91 +430,23 @@ switch what
             
             D = getrow(Events , Events.BN == BN(bn));
             
-            for tn = 1 :length(fields(Pall))
+            for tn = 1 :length(D.TN)
                 PSD = eval(['Pall.PSD' , num2str(tn)]);
-                if isempty(PSD)
-                    D.Pow_Norm_stim{tn,1} = [];
-                else
+                
+                for b = 1:length(BandInfo.bands)
                     D.Pow_Norm_stim{tn,1}(:,b, :) =  nanmean(PSD(:,BandInfo.bandid{b}(1) : BandInfo.bandid{b}(2),:) , 2);
                 end
                 
             end
             Pall_binned = addstruct(Pall_binned, D);
             clear D
+            disp(['PSD warping for block ' , num2str(bn) , ' complete'])
         end
         Pall = Pall_binned;
         saveName = [saveDir,'AllData_PSD_Warped.mat'];
-        save(saveName,'-struct','Pall', '-v7.3');
-        
-    case 'TimeWarpPSD_binned'
-        % obtain the time normalized event stamps for Block bins
-        % Dall input for this case is the binnned PSD structure load('AllData_PSD_StimNorm.mat') --> Pall
-        % Pall is the BASELINE normalized power: Pall  = secog_parseEEG_PSD('NormalizePSD' , Dall, subjNum);
-        load([saveDir,'AllData_Events.mat']);
-        Fs = 1024;
-        Fs_ds = floor(Fs/DownsampleRate);
-        % find average event markers
-        E  = secog_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
-        BN = unique(Events.BN);
-        P = [];
-        for bn = 1:length(BN)
-            D = getrow(Dall,Dall.BN == BN(bn));
-           
-            % this loads up the data strutre where the raw PSD for that block is already stored 
-            % 'ParseEEG-calcPSD'
-            % Use the average patterns of block groups to warp them
-            nPSD = Dall.Pow_Norm_stim;
-            
-            % set the sequence length for "*******" trilas to one
-            D.seqlength(isnan(D.seqlength)) = 1;
-            D.NumWarpSamp = NumWarpSampSlow* ones(size(D.TN));
-            D.NumWarpSamp(logical(D.Fast)) = NumWarpSampFast;
-            for tn = 1:length(D.TN)
-                if length(find(D.NormEventMarker{tn})) == D.seqlength(tn) +1 & ~D.isError(tn) & length(D.EventMarker{tn})>D.NumWarpSamp(tn)
-                    % check which block group this block falls into
-                    bg = 1;
-                    mem = 0;
-                    while mem == 0
-                        if ismember(D.BN(tn) , E.blockGroups{bg})
-                            mem = 1;
-                            BG = bg;
-                        end
-                        bg = bg+1;
-                    end
-                    A = nPSD{tn};
-                    % the normalized event markers in trial tn
-                    idx = [0 find(D.NormEventMarker{tn}) D.NumWarpSamp(tn)];
-                    
-                    % find the row number corresponding to the seqNumb
-                    sn = find(E.SN{BG}==D.seqNumb(tn));
-                    % average normalized time stamps for the sn , BG
-                    if tn>2
-                        idn = [0 E.NEM{BG}(sn , ~isnan(E.NEM{BG}(sn ,:))) D.NumWarpSamp(tn)];
-                        diffNEM = diff(idn);
-                    else
-                        % for "* * * * * * * *" trials, the average pattern is the same as the trial since there is no variability
-                        idn = idx;
-                        diffNEM = diff(idn);
-                    end
-                    
-                    for e = 2:length(idn)
-                        % make sure that each
-                        idd   = linspace(1 , [idn(e)+1 - (idn(e-1) + 1)] , diffNEM(e-1));
-                        for ch = 1:size(A,1)
-                            for fi=1:size(A,2)
-                                Dout.PSD_stim{tn ,1}(ch,fi,idn(e-1)+1:idn(e)) = interp1([1:idx(e) - idx(e-1)] , squeeze(nPSD{tn}(ch,fi,idx(e-1)+1:idx(e))) , idd);
-                            end
-                        end
-                    end
-                else
-                    Dout.PSD_stim{tn ,1} = [];
-                end
-            end
-            P = [Dout , P]
-        end
-        Pall = Dout;
-        saveName = [saveDir,'AllData_PSD_Warped.mat'];
-        save(saveName,'-struct','Pall', '-v7.3');
+        save(saveName,'Pall', '-v7.3');
+        Dout = Pall;
+    
         
 end
 
