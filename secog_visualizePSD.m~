@@ -29,10 +29,6 @@ while(c<=length(varargin))
             % Channel(s) to plot
             eval([varargin{c} '= varargin{c+1};']);
             c=c+2;
-        case {'Bands2Plot'}
-            % Band(s) to plot
-            eval([varargin{c} '= varargin{c+1};']);
-            c=c+2;
         case {'NumWarpSampChunk'}
             % Number of warping sample for chunks, fast single finger  Default = 200
             eval([varargin{c} '= varargin{c+1};']);
@@ -100,7 +96,7 @@ blockGroupNames = {'SingleFingNat' , 'SingleFingSlow' , 'SingleFingFast' , 'Inte
     'ChunkDay2' , 'Intermixed6' , 'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9'}';
 
 
-bandsLab = {'Delta <4Hz' , 'Theta 5-8Hz' , 'Alpha 9-16Hz' , 'Beta 17-36Hz' , 'L-Gamma 37-70Hz' , 'H-Gamma 70-130' , 'NoBandLand 130-180'};
+bandsLab = {'Delta <4Hz' , 'Theta 4-8Hz' , 'Alpha 8-13Hz' , 'L-Beta 13-24Hz' , 'H-Beta 24-36Hz' , 'L-Gamma 36-48Hz' , 'H-Gamma >48Hz'};
 
 
 switch what
@@ -256,7 +252,7 @@ switch what
                 for b =1:length(bandsLab)
                     B  = 100*squeeze(AvgPow{sn}(ch , b , :))+.7*b;
                     plot([1:E.NumWarpSamp] , B , 'LineWidth' , 3)
-                    T(b) = nanmedian(B);
+                    T(b) = nanmean(B);
                     hold on
                 end
                 hold off
@@ -266,13 +262,12 @@ switch what
                     xtikx = [xtikx  , num2str(EM(lin))];
                     line([NEM(lin) NEM(lin)] , [0 max(B)] , 'color' , 'red' , 'LineStyle' , ':' , 'LineWidth' , 3)
                 end
-                T = linspace(min(T) , max(T) , length(T));
                 xlabel('Normalized Time (ms)')
                 set(gca ,'YTick' , T ,'YTickLabels' , bandsLab,'XTickLabels' , xtikx, 'XTick' , NEM );
                 
-                line([max(NEM)-std(NEM) max(NEM)-std(NEM)] , [max(B)-1- max(B)],'color' , 'black' , 'LineWidth' , 5)
-                text(max(NEM),max(B),'1%','FontSize' , 16 )
-                set(gca , 'XLim' , [1 E.NumWarpSamp] ,'FontSize' , 10,'Box' , 'off')
+                line([max(NEM) median(NEM)] , [max(B)- max(B)],'color' , 'black' , 'LineWidth' , 5)
+                text(median(NEM),max(B),'5','FontSize' , 16 )
+                set(gca , 'XLim' , [1 E.NumWarpSamp] ,'FontSize' , 16,'Box' , 'off')
                 figCount = figCount + 1;
             end
             end

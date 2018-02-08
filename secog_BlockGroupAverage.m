@@ -7,8 +7,8 @@ NormType = 'stim';
 NumWarpSampFast = 200;
 NumWarpSampSlow = 500;
 TimeDelay = 0.5; % sec
-FreqRange = [2 150];
-numFreqBins = 75;
+FreqRange = [2 180];
+numFreqBins = 90;
 Channels = [1:129];
 subjname = {'P2'};
 c = 1;
@@ -63,7 +63,8 @@ blockGroupNames = {'SingleFingNat' , 'SingleFingSlow' , 'SingleFingFast' , 'Inte
     'ChunkDay2' , 'Intermixed6' , 'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9'}';
 
 
-bandsLab = {'Delta <4Hz' , 'Theta 4-8Hz' , 'Alpha 8-13Hz' , 'L-Beta 13-24Hz' , 'H-Beta 24-36Hz' , 'L-Gamma 36-48Hz' , 'H-Gamma >48Hz'};
+bandsLab = {'Delta <4Hz' , 'Theta 5-8Hz' , 'Alpha 9-16Hz' , 'Beta 17-366Hz' , 'L-Gamma 37-70Hz' , 'H-Gamma 70-130' , 'NoBandLand 130-180'};
+
 
 
 switch what
@@ -103,7 +104,7 @@ switch what
     case 'raw_BlockGroup'
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % patterned PSDs so the output  of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
         
         Pall = Dall;
         Pall.Fast = zeros(size(Pall.TN));
