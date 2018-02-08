@@ -4,6 +4,22 @@ function secog_visualizePSD(Pall , subjNum, what,varargin)
 %       preSMA channels : [128 , 129]
 %       PMd channels:     [12 14 , 104:107 , 109]     
 %       PMv channel :     [6] 
+%% plotting case summary
+%      'binned_SingleTrial'
+%      'binned_SingleTrial_AvgChann'
+%      'binned_BlockGroup_AvgChann'
+%      'binned_BlockGroup'
+%      'raw_SingleTrial'
+%      'raw_BlockGroup'
+%      'raw_BlockGroup_AvgChann'
+
+%% set defaults and deal with varargin
+NumWarpSampFast = 200;
+NumWarpSampSlow = 500;
+DownsampleRate = 10;
+FreqRange = [2 180];
+numFreqBins = 90;
+
 subjname = {'P2'};
 c = 1;
 while(c<=length(varargin))
@@ -44,12 +60,6 @@ while(c<=length(varargin))
             error(sprintf('Unknown option: %s',varargin{c}));
     end
 end
-if ~exist('NumWarpSampFast')
-    NumWarpSampFast = 200;
-end
-if ~exist('NumWarpSampSlow')
-    NumWarpSampSlow = 500;
-end
 if ~exist('Chan2Plot')
     error('Define Channels --> Chan2Plot')
 end
@@ -59,20 +69,13 @@ end
 if  sum(strcmp(what , {'binned_SingleTrial','raw_SingleTrial'}))  & ~exist('TBNum')
     error('Define Block and trial number to plot')
 end
-if ~exist('DownsampleRate')
-    DownsampleRate = 10;
-end
-if ~exist('FreqRange')
-    FreqRange = [2 150];
-end
-if ~exist('numFreqBins')
-    numFreqBins = 75;
-end
+
+
 Fs = 1024;
 Fs_ds = floor(Fs/DownsampleRate);
 min_freq =  FreqRange(1);
 max_freq = FreqRange(2);
-frex = logspace(log10(min_freq),log10(max_freq),numFreqBins);
+frex = linspace(min_freq, max_freq,numFreqBins);
 %% load required data
 mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} ,'/'];
 load([mainDir , 'ChanLabels.mat'])
@@ -278,8 +281,8 @@ switch what
         for ch = 1:length(Chan2Plot)
             subplot(length(Chan2Plot),1, ch)
             B = real(squeeze(D.Pow_Norm_stim(ch,:,:)));
-%             contourf(time,frex,B,60,'linecolor','none')
-            imagesc(time,frex,B)
+            contourf(time,frex,B,60,'linecolor','none')
+%             imagesc(time,frex,B)
             % caxis([-15 7])
             title (['Raw PSD for ',num2str(D.AllPress(1,:)) ', in Channel ' , ChanLabels{Chan2Plot(ch)}])
             for lin = 1:length(EM)
@@ -288,7 +291,7 @@ switch what
             xlabel('SEC')
             ylabel('Frequency (Hz)')
             
-            set(gca ,'FontSize' , 16,'Box' , 'off')
+            set(gca ,'FontSize' , 16,'Box' , 'off', 'YTick' , [5:5:150]);
         end
         %% PLOT average normalized binned power
     case 'raw_BlockGroup'
@@ -297,7 +300,7 @@ switch what
         % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
         E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
         BG = find(strcmp(E.blockGroupNames , BlockGroup));
-        E.NumWarpSamp([1 2 3 6 10 14]) = NumWarpSampFast;
+        E.NumWarpSamp([1 3 6 10 14]) = NumWarpSampFast;
         E = getrow(E , BG);
         if isempty(E.EM)
             error('Nothing to plot!')

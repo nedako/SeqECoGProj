@@ -8,8 +8,8 @@ NormType = 'stim';
 NumWarpSampFast = 200;
 NumWarpSampSlow = 500;
 TimeDelay = 0.5; % sec
-FreqRange = [2 150];
-numFreqBins = 75;
+FreqRange = [2 180];
+numFreqBins = 90;
 Channels = [1:129];
 
 while(c<=length(varargin))
@@ -70,8 +70,7 @@ fastBlock = horzcat(blockGroups{1} , blockGroups{3} , blockGroups{6}, blockGroup
 Dall.Fast(ismember(Dall.BN , fastBlock)) = 1;
 min_freq =  FreqRange(1);
 max_freq = FreqRange(2);
-frex = logspace(log10(min_freq),log10(max_freq),numFreqBins);
-
+frex = linspace(min_freq, max_freq,numFreqBins);
 BandInfo.bandsLab = {'Delta <4Hz' , 'Theta 4-8Hz' , 'Alpha 8-13Hz' , 'L-Beta 13-24Hz' , 'H-Beta 24-36Hz' , 'L-Gamma 36-48Hz' , 'H-Gamma >48Hz'};
 BandInfo.bands = {[0 4], [4 8] [8 13] [13 24] [14 36] [36 48] [48 110]};
 for b = 1:length(BandInfo.bands)
@@ -216,8 +215,9 @@ switch what
             marker = Beeg.values(find(strcmp(Beeg.label , 'TTL')) , :);
             marker = [0 diff(marker <-2*10^6)];
             for ch = 1:size(Beeg.values , 1)
-                A = filter(b,a , Beeg.values(ch , :));
-                Beeg.values(ch , :) = filter(c,d , A);
+                B = Beeg.values(ch , :);
+                A = filter(b,a , B);
+                Beeg.values(ch , :) = A;
             end
             start_tr = find(marker == 1); % starts of trials
             % right now the end TTl pulse is being sent by the releas eof
@@ -234,7 +234,7 @@ switch what
             for ch = 1:size(Beeg.values , 1)
                 Chname{ch} = ['RawEEGpower',num2str(ch)];
                 [REG, BandInfo] = secog_waveletPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate);
-%                 REG = real(REG);
+                REG = 10*log10(abs(REG));
                 % normalize each trial to baseline : TimeDelay ms before the stim  onset
                 for tr = 1:length(start_tr)
                     baseline = 10*log10(abs(nanmean(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay):start_tr(tr)) , 2)));

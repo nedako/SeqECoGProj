@@ -39,10 +39,10 @@ if ~exist('numCycles')
     numCycles = 7;
 end
 if ~exist('FreqRange')
-    FreqRange = [2 150];
+    FreqRange = [2 180];
 end
 if ~exist('numFreqBins')
-    numFreqBins = 75;
+    numFreqBins = 90;
 end
 if ~exist('DownsampleRate')
     DownsampleRate = 10;
@@ -54,7 +54,7 @@ end
 
 min_freq =  FreqRange(1);
 max_freq = FreqRange(2);
-frex = logspace(log10(min_freq),log10(max_freq),numFreqBins);
+frex = linspace(min_freq, max_freq,numFreqBins);
 time = -1:1/Fs:1;
 s    = numCycles./(2*pi*frex); % with 10 cycles
 n_wavelet            = length(time);% sampling frequency of the wavelet

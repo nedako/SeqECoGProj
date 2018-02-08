@@ -26,13 +26,16 @@ cd('/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/P2')
 load('AllData_PSD_Warped.mat')
 secog_BlockGroupAverage(Pall,1,'binned_BlockGroup')
 
-%%
-
-
-
-
-
-secog_BlockGroupAverage(Pall,1,'raw_BlockGroup')
+%% plotting case summary
+%      'binned_SingleTrial'
+%      'binned_SingleTrial_AvgChann'
+%      'binned_BlockGroup_AvgChann'
+%      'binned_BlockGroup'
+%      'raw_SingleTrial'
+%      'raw_BlockGroup'
+%      'raw_BlockGroup_AvgChann'
+secog_visualizePSD(Pall,1,'raw_BlockGroup' , 'BlockGroup' , 'SingleFingSlow','Chan2Plot' , [12 14])
+secog_visualizePSD(Pall,1,'raw_SingleTrial' , 'TBNum', [1 1], 'Chan2Plot' , [12 14])
 
 
 blockGroupNames = {'SingleFingNat' , 'SingleFingSlow' , 'SingleFingFast' , 'Intermixed1' , 'Intermixed2' , 'ChunkDay1' , 'Intermixed3' , 'Intermixed4' , 'Intermixed5',...
