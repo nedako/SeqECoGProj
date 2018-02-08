@@ -29,6 +29,8 @@ secog_BlockGroupAverage(Pall,1,'raw_BlockGroup', 'Channels' , chans)
 cd('/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/P2')
 load('AllData_PSD_Warped.mat')
 secog_BlockGroupAverage(Pall,1,'binned_BlockGroup', 'Channels' , chans)
+secog_BlockGroupAverage([],1,'raw_AvgPower', 'Channels' , chans)
+
 
 %% plotting case summary
 %      'binned_SingleTrial'

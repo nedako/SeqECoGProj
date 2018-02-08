@@ -278,8 +278,8 @@ switch what
                 REG = 10*log10(abs(REG));
                 % normalize each trial to baseline : TimeDelay ms before the stim  onset
                 for tr = 1:length(start_tr)
-                    baseline = 10*log10(abs(nanmean(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay):start_tr(tr)) , 2)));
-                    X = 10*log10((abs(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay) : end_tr(tr)+floor(Fs_ds*2*TimeDelay)))));
+                    baseline = nanmean(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay):start_tr(tr)) , 2);
+                    X = REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay) : end_tr(tr)+floor(Fs_ds*2*TimeDelay));
                     X = (X - repmat(baseline , 1,size(X,2)))./repmat(baseline , 1,size(X,2));
                     statement1 = ['D.PSD{tr,1}(ch , :,:)  = X;'];
                     eval(statement1);

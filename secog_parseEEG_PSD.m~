@@ -181,29 +181,19 @@ switch what
 
             %% save the unbinned data in separate blocks for managability in size
 %             save the raw unbinned psd
-D.decompBL, D.decompTR, D.decompBefTR, D.decompAftTR
             for tn = 1 :length(start_tr)
                 % prepare the individual trials to be saved as the
                 % fileds of a structre to make loading easier
-                eval(['Pall.DEC',num2str(tn),'.decompBL = D.decompBL{', num2str(tn), '};']);
-                eval(['Pall.DEC',num2str(tn),'.decompBL = D.decompBL{', num2str(tn), '};']);
+                eval(['Pall.DEC',num2str(tn),'.decompBL    = D.decompBL{', num2str(tn), '};']);
+                eval(['Pall.DEC',num2str(tn),'.decompTR    = D.decompTR{', num2str(tn), '};']);
+                eval(['Pall.DEC',num2str(tn),'.decompBefTR = D.decompBefTR{', num2str(tn), '};']);
+                eval(['Pall.DEC',num2str(tn),'.decompAftTR = D.decompAftTR{', num2str(tn), '};']);
             end
             saveName = [saveDir,'Raw_Decomp_B',num2str(i) ,'.mat'];
             save(saveName,'-struct','Pall', '-v7.3');
 
         end
-        load([saveDir , 'AllData_Behav.mat'])
-        Dall.Pow_Norm_stim = Dout.Pow_Norm_stim;
-        Pall = Dall;
-        clear Dall
-        saveName = [saveDir,'AllData_PSD_StimNorm.mat'];
-        save(saveName , 'Pall' , '-v7.3');
-        
-        saveName = [saveDir,'AllData_Events.mat'];
-        save(saveName , 'Events' , '-v7.3');
-        
-
-        
+       
         %% Filter Visualization
         % h = fvtool(b,a);
         % h.Fs = Fs;
@@ -288,8 +278,8 @@ D.decompBL, D.decompTR, D.decompBefTR, D.decompAftTR
                 REG = 10*log10(abs(REG));
                 % normalize each trial to baseline : TimeDelay ms before the stim  onset
                 for tr = 1:length(start_tr)
-                    baseline = 10*log10(abs(nanmean(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay):start_tr(tr)) , 2)));
-                    X = 10*log10((abs(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay) : end_tr(tr)+floor(Fs_ds*2*TimeDelay)))));
+                    baseline = nanmean(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay):start_tr(tr)) , 2);
+                    X = REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay) : end_tr(tr)+floor(Fs_ds*2*TimeDelay));
                     X = (X - repmat(baseline , 1,size(X,2)))./repmat(baseline , 1,size(X,2));
                     statement1 = ['D.PSD{tr,1}(ch , :,:)  = X;'];
                     eval(statement1);
