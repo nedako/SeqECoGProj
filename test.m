@@ -24,13 +24,22 @@ Dout  = secog_parseEEG_PSD('ParseEEG-calc_norm_PSD' , Dall, 1 , 'Channels' , cha
 Dout  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned' , Events, 1);
 Dout  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Events, 1);
 
+
 cd('/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/P2')
 load('AllData_PSD_Warped.mat')
 secog_BlockGroupAverage(Pall,1,'raw_BlockGroup', 'Channels' , chans)
-
+%% average pattern calculation
+load('AllData_PSD_Warped.mat')
 secog_BlockGroupAverage(Pall,1,'binned_BlockGroup', 'Channels' , chans)
+
+load('AllData_PSD_Warped_SeqType.mat')
+secog_BlockGroupAverage(Pall,1,'binned_SeqType', 'Channels' , chans)  
+
+
 secog_BlockGroupAverage([],1,'raw_AvgPower_BlockGroup', 'Channels' , chans)
 secog_BlockGroupAverage([],1,'raw_SeqType', 'Channels' , chans)
+
+
 
 
 %% plotting case summary
@@ -49,6 +58,7 @@ secog_visualizePSD(Pall,1,'raw_BlockGroup' , 'BlockGroup' , 'SingleFingSlow','Ch
 secog_visualizePSD(Pall,1,'raw_BlockGroup' , 'BlockGroup' , 'SingleFingSlow','Chan2Plot' , [27:30],'Channels' , chans) % SMA
 secog_visualizePSD(Pall,1,'binned_BlockGroup' , 'BlockGroup' , 'SingleFingFast','Chan2Plot' , [20 :22, 24, 12, 14],'Channels' , chans); % PMd
 secog_visualizePSD(Pall,1,'binned_BlockGroup' , 'BlockGroup' , 'SingleFingFast','Chan2Plot' , [27:30],'Channels' , chans); % SMA
+secog_visualizePSD(Pall,1,'raw_BlockGroup_SeqType' , 'BlockGroup' , 'Intermixed1','Chan2Plot' , [27:30],'Channels' , chans); % SMA
 
 
 

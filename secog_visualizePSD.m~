@@ -388,7 +388,7 @@ switch what
                     B = real(squeeze(Pall.AvgPow{sn}(ch,:,:)));
                     contourf([1:E.NumWarpSamp],frex,B,60,'linecolor','none')
                     colorbar
-                    caxis([-0.05 0.05])
+                    caxis([-0.08\ 0.1])
                     title (['Raw PSD for SeqNumb =  ', num2str(E.SN{1}(sn)),', in Channel ' , ChanLabels{Chan2Plot(ch)}])
                     hold on
                     xtikx = {};
