@@ -495,8 +495,8 @@ switch what
         SeqTrans = [5 11 22 33 44 55 0 1 2 3 4 103 104 203 204;...
             100 10 10 10 10 10 20 30 30 30 30 40 50 40 50];
         for sn = 1:length(SeqTrans)
-            id  = Events.seqNumb == SeqTrans(1 , sn);
-            Events.seqNumb(id) = SeqTrans(2 , sn);
+            id  = Dall.seqNumb == SeqTrans(1 , sn);
+            Dall.seqNumb(id) = SeqTrans(2 , sn);
         end
         
         BN = unique(Events.BN);
@@ -568,7 +568,7 @@ switch what
                 eval([trialName, ' = D.PSD_stim{' , num2str(tn) , '};'])
             end
 
-            saveName = [saveDir,'warped_PSD_B_SeqType',num2str(bn) ,'.mat'];
+            saveName = [saveDir,'warped_PSD_B_SeqTyp',num2str(bn) ,'.mat'];
             save(saveName,'-struct','Pall', '-v7.3');
             % stace the binned PSDs
             
@@ -588,7 +588,7 @@ switch what
             disp(['PSD warping for block ' , num2str(bn) , ' complete'])
         end
         Pall = Pall_binned;
-        saveName = [saveDir,'AllData_PSD_Warped_SeqType.mat'];
+        saveName = [saveDir,'AllData_PSD_Warped.mat'];
         save(saveName,'Pall', '-v7.3');
         Dout = Pall;
     
