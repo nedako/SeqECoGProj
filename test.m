@@ -26,8 +26,6 @@ cd('/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/P2')
 load('AllData_PSD_Warped.mat')
 secog_BlockGroupAverage(Pall,1,'raw_BlockGroup', 'Channels' , chans)
 
-cd('/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/P2')
-load('AllData_PSD_Warped.mat')
 secog_BlockGroupAverage(Pall,1,'binned_BlockGroup', 'Channels' , chans)
 secog_BlockGroupAverage([],1,'raw_AvgPower', 'Channels' , chans)
 
@@ -44,8 +42,8 @@ blockGroupNames = {'SingleFingNat' , 'SingleFingSlow' , 'SingleFingFast' , 'Inte
     'ChunkDay2' , 'Intermixed6' , 'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9'}';
 
 
-secog_visualizePSD(Pall,1,'raw_BlockGroup' , 'BlockGroup' , 'Intermixed8','Chan2Plot' , [20 :22, 24, 12, 14],'Channels' , chans) % PMd
-secog_visualizePSD(Pall,1,'raw_BlockGroup' , 'BlockGroup' , 'Intermixed9','Chan2Plot' , [27:30],'Channels' , chans) % SMA
+secog_visualizePSD(Pall,1,'raw_BlockGroup' , 'BlockGroup' , 'SingleFingFast','Chan2Plot' , [20 :22, 24, 12, 14],'Channels' , chans) % PMd
+secog_visualizePSD(Pall,1,'raw_BlockGroup' , 'BlockGroup' , 'SingleFingFast','Chan2Plot' , [27:30],'Channels' , chans) % SMA
 secog_visualizePSD(Pall,1,'binned_BlockGroup' , 'BlockGroup' , 'SingleFingFast','Chan2Plot' , [20 :22, 24, 12, 14],'Channels' , chans); % PMd
 secog_visualizePSD(Pall,1,'binned_BlockGroup' , 'BlockGroup' , 'SingleFingFast','Chan2Plot' , [27:30],'Channels' , chans); % SMA
 
