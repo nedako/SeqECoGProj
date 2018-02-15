@@ -90,7 +90,7 @@ mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNu
 load([mainDir , 'ChanLabels.mat'])
 ChanLabels = ChanLabels(Channels);
 load([mainDir , 'AllData_Behav.mat'])
-load('AllData_Events.mat')
+load([mainDir , 'AllData_Events.mat'])
 load([mainDir , 'AllData_AvgMarker.mat'])
 
 %% HouseKeeping
@@ -116,7 +116,7 @@ switch what
         for ch = 1:length(Chan2Plot)
             subplot(length(Chan2Plot),1, ch)
             for b =1:length(bandsLab)
-                B = real(squeeze(Pow(ch , b , :))+8*b);
+                B = real(squeeze(Pow(Chan2Plot(ch) , b , :))+8*b);
                 plot(time , B , 'LineWidth' , 3)
                 hold on
                 T(b) = nanmean(B);
@@ -149,7 +149,7 @@ switch what
         EM = find(D.EventMarker{1})/Fs_ds;
         for ch = 1:length(Chan2Plot)
             subplot(length(Chan2Plot),1, ch)
-            B = real(squeeze(D.Pow_Norm_stim(ch,:,:)));
+            B = real(squeeze(D.Pow_Norm_stim(Chan2Plot(ch),:,:)));
             %             contourf(time,frex,B,60,'linecolor','none')
             imagesc(time,frex,B)
             % caxis([-15 7])
@@ -363,6 +363,8 @@ switch what
             end
         end
     case 'raw_BlockGroup_SeqType'
+        
+        
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
@@ -385,10 +387,10 @@ switch what
                 EM  = E.EM{1}(sn ,  ~isnan(E.EM{1}(sn,:)))/100;
                 for ch = 1:length(Chan2Plot)
                     subplot(length(E.SN{1})-1 ,length(Chan2Plot), figCount)
-                    B = real(squeeze(Pall.AvgPow{sn}(ch,:,:)));
+                    B = real(squeeze(Pall.AvgPow{sn}(Chan2Plot(ch),:,:)));
                     contourf([1:E.NumWarpSamp],frex,B,60,'linecolor','none')
                     colorbar
-                    caxis([-0.05 0.05])
+                    caxis([-0.08 0.07])
                     title (['Raw PSD for SeqNumb =  ', num2str(E.SN{1}(sn)),', in Channel ' , ChanLabels{Chan2Plot(ch)}])
                     hold on
                     xtikx = {};
@@ -412,8 +414,12 @@ switch what
         % Pall is the AllData_PSD_Warped_SeqType.mat
         % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
         
-        Dall.PSD_stim = Pall.Pow_Norm_stim;
-        Pall = Dall;
+        SeqTrans = [5 11 22 33 44 55 0 1 2 3 4 103 104 203 204;...
+            100 10 10 10 10 10 20 30 30 30 30 40 50 40 50];
+        for sn = 1:length(SeqTrans)
+            id  = Pall.seqNumb == SeqTrans(1 , sn);
+            Pall.seqNumb(id) = SeqTrans(2 , sn);
+        end
         Pall.Fast = zeros(size(Pall.TN));
         E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
         E.NumWarpSamp([1 3 6 10 14]) = NumWarpSampFast;
@@ -423,7 +429,6 @@ switch what
         end
         fastBlock = horzcat(blockGroups{1} , blockGroups{3} , blockGroups{6}, blockGroups{10},blockGroups{14});
         Pall.Fast(ismember(Pall.BN , fastBlock)) = 1;
-        clear Dall
         figure('color' , 'white')
         figCount = 1;
         for sn = 1:length(E.SN{1})
@@ -437,9 +442,9 @@ switch what
                 F = getrow(Pall , id);
                 % sum the warped PSDs insife the F structure
                 tcount = 1;
-                for tn = 1:length(F.PSD_stim)
-                    if isequal(size(F.PSD_stim{tn}) ,[length(ChanLabels) , length(bandsLab) , E.NumWarpSamp])
-                        tempPow(tcount , :,:,:) = F.PSD_stim{tn};
+                for tn = 1:length(F.Pow_Norm_stim)
+                    if isequal(size(F.Pow_Norm_stim{tn}) ,[length(ChanLabels) , length(bandsLab) , E.NumWarpSamp])
+                        tempPow(tcount , :,:,:) = F.Pow_Norm_stim{tn};
                         tcount = tcount +1;
                     end
                 end
@@ -448,7 +453,7 @@ switch what
                 for ch = 1:length(Chan2Plot)
                     subplot(length(E.SN{1})-1 ,length(Chan2Plot), figCount)
                     for b =1:length(bandsLab)
-                        B  = 100*squeeze(AvgPow{sn}(ch , b , :))+.7*b;
+                        B  = 10*squeeze(AvgPow{sn}(Chan2Plot(ch) , b , :))+.7*b;
                         plot([1:E.NumWarpSamp] , B , 'LineWidth' , 3)
                         T(b) = nanmedian(B);
                         hold on
@@ -471,6 +476,129 @@ switch what
                 end
             end
         end
+    case 'AvgPower_SeqType'
+        load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
+        % Pall needs to be the structure containing time normalized, average
+        % Pall is the AllData_PSD_Warped.mat
+        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % for this case because we are doigna comparisn, the BlockGroup is
+        % a 1xN cell containnig the groups to be compared
+        E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
+        BG = find(strcmp(E.blockGroupNames , BlockGroup));
+        E.NumWarpSamp([1 3 6 10 14]) = NumWarpSampFast;
+        E = getrow(E , BG);
+        if isempty(E.EM)
+            error('Nothing to plot!')
+        end
+        filename = [mainDir ,  'AverageSpect_SeqType' , num2str(BG),'.mat'];
+        load(filename)
+        figure('color' , 'white')
+        chanGroup = {Chan2Plot};
+        fCont = 1;
+        for sn = 1:length(Pall.AvgPowTR)
+            Tr = Pall.AvgPowTR{sn};
+            Tre = Pall.SePowTR{sn};
+            
+            Bl = Pall.AvgPowBL{sn};
+            Ble = Pall.SePowBL{sn};
+            
+            for cg = 1:length(chanGroup)
+                APtr{cg}(sn,:) = nanmean(Tr(chanGroup{cg}, :) , 1);
+                AEtr{cg}(sn,:) = nanmean(Tre(chanGroup{cg}, :) , 1);
+                APbl{cg}(sn,:) = nanmean(Bl(chanGroup{cg}, :) , 1);
+                AEbl{cg}(sn,:) = nanmean(Ble(chanGroup{cg}, :) , 1);
+                subplot(length(chanGroup) , length(Pall.AvgPowTR) ,fCont)
+                title(['sn = ' , num2str(Pall.SN{1}(sn))])
+                h1 = plotshade([2:2:180] , APtr{cg}(sn,:) ,AEtr{cg}(sn,:),'transp' , .2 , 'patchcolor' , 'b' , 'linecolor' , 'b' , 'linewidth' , 3 , 'linestyle' , ':')
+                hold on
+                h2 = plotshade([2:2:180] , APbl{cg}(sn,:) ,AEbl{cg}(sn,:),'transp' , .2 , 'patchcolor' , 'r' , 'linecolor' , 'r' , 'linewidth' , 3 , 'linestyle' , ':')
+                title(['Average Powerfor sequence type ' , num2str(E.SN{1}(sn)) ])
+                fCont = fCont +1;
+                legend([h1,h2] , {'Trial' , 'Baseline'})
+                set(gca , 'YLim' , [30 80]);
+            end
+        end
+        
+    case 'AvgPower_SeqType_comp'
+        colorz = {[0 0  1],[1 0 0],[0 1 0],[1 0 1],[0 1 1],[0.7 0.7 0.7],[1 1 0],[.3 .3 .3]};
+        load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
+        % Pall needs to be the structure containing time normalized, average
+        % Pall is the AllData_PSD_Warped.mat
+        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % for this case because we are doigna comparisn, the BlockGroup is
+        % a 1xN cell containnig the groups to be compared
+        
+        for n = 1:length(BlockGroup)
+            n
+            load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
+            E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
+            E.NumWarpSamp([1 3 6 10 14]) = NumWarpSampFast;
+            
+            BG(n) = find(strcmp(E.blockGroupNames , BlockGroup{n}));
+            E = getrow(E , BG(n));
+            if isempty(E.EM)
+                error('Nothing to plot!')
+            end
+            filename = [mainDir ,  'AverageSpect_SeqType' , num2str(BG(n)),'.mat'];
+            load(filename)
+            
+            chanGroup = {Chan2Plot};
+            fig = figure;
+            for sn = 1:length(Pall.AvgPowTR)
+                Tr = Pall.AvgPowTR{sn};
+                Tre = Pall.SePowTR{sn};
+                
+                Bl = Pall.AvgPowBL{sn};
+                Ble = Pall.SePowBL{sn};
+                
+                for cg = 1:length(chanGroup)
+                    Tcg = Tr(chanGroup{cg} , :);
+                    Bcg = Bl(chanGroup{cg} , :);
+                    diff  = Tcg - Bcg;
+                    diffe = Tre(chanGroup{cg} , :) - Ble(chanGroup{cg} , :);
+                    bandLabel = repmat([2:2:180]' , length(chanGroup{cg}) , 1);
+                    data{cg , n}(sn , :) = reshape(diff' , numel(diff) , 1);
+                    datae{cg , n}(sn , :) = reshape(diffe' , numel(diffe) , 1);
+                    [x{cg,n}(sn,:) , p{cg,n}(sn,:) , e{cg,n}(sn,:)] = lineplot(bandLabel , data{cg , n}(sn , :)' , 'plotfcn' , 'nanmean');
+%                     diff{sn}(n, :) = 100*(APtr{cg,n}(sn,:) - APbl{cg,n}(sn,:))./ APbl{cg,n}(sn,:);
+                end
+            end
+            close(fig)
+        end
+        figure('color' , 'white')
+        fCont = 1;
+        if length(chanGroup{1}) == 1
+            for sn = 1:size(x{cg,n} , 1)
+                leg = [];
+                subplot(length(chanGroup) , size(x{cg,n} , 1) ,fCont)
+                for n = 1:length(BlockGroup)
+                    h(n).fig = plotshade(x{cg,n}(sn,:) ,data{cg , n}(sn , :) , datae{cg , n}(sn , :),'transp' , .2 , 'patchcolor' , colorz{n} , 'linecolor' , colorz{n} , 'linewidth' , 3 , 'linestyle' , ':')
+                    leg = [leg , h(n).fig];
+                    hold on
+                    grid on
+                end
+                legend(leg , BlockGroup)
+                title(['Power Percent change from baseline for sequence type ' , num2str(E.SN{1}(sn)) ])
+                set(gca , 'YLim',[-4 6] , 'FontSize' , 16);
+                fCont = fCont +1;
+            end
+        else
+            for sn = 1:size(x{cg,n} , 1)
+                leg = [];
+                subplot(length(chanGroup) , size(x{cg,n} , 1) ,fCont)
+                for n = 1:length(BlockGroup)
+                    h(n).fig = plotshade(x{cg,n}(sn,:) , p{cg,n}(sn,:) , e{cg,n}(sn,:),'transp' , .2 , 'patchcolor' , colorz{n} , 'linecolor' , colorz{n} , 'linewidth' , 3 , 'linestyle' , ':')
+                    leg = [leg , h(n).fig];
+                    hold on
+                    grid on
+                end
+                legend(leg , BlockGroup)
+                title(['Power Percent change from baseline for sequence type ' , num2str(E.SN{1}(sn)) ])
+                set(gca , 'YLim',[-4 6] , 'FontSize' , 16);
+                fCont = fCont +1;
+            end
+        end
+        
     case 'binned_SingleTrial_AvgChann'
         % input to this has to be AllData_PSD_StimNorm.mat
         Pall  = secog_addEventMarker(Pall, subjNum, Fs_ds , 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
@@ -497,8 +625,6 @@ switch what
         text(median(EM),max(B),'5','FontSize' , 16 )
         set(gca ,'FontSize' , 16,'Box' , 'off')
         %% PLOT average normalized binned power
-        
-        
         
         
 end

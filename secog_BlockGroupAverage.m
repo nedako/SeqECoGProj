@@ -126,7 +126,7 @@ switch what
                 end
                 P = addstruct(P,Pall);
             end
-
+            
             clear tempPow AvgPow tcount F
             saveName = [mainDir,'AverageRawPSD',num2str(BG) , '.mat'];
             
@@ -148,7 +148,7 @@ switch what
                 clear tempPow
             end
             
-            E1.AvgPow = AvgPow; 
+            E1.AvgPow = AvgPow;
             Pall = E1;
             save(saveName , 'Pall');
         end
@@ -184,7 +184,7 @@ switch what
                 end
                 P = addstruct(P,Pall);
             end
-
+            
             clear tempPow AvgPow tcount F
             saveName = [mainDir,'AverageRawPSD_SeqType',num2str(BG) , '.mat'];
             
@@ -206,7 +206,7 @@ switch what
                 clear tempPow
             end
             
-            E1.AvgPow = AvgPow; 
+            E1.AvgPow = AvgPow;
             Pall = E1;
             save(saveName , 'Pall');
         end
@@ -252,68 +252,146 @@ switch what
                 clear tempPow
             end
             save(saveName , 'AvgPow');
-        end     
+        end
     case 'raw_AvgPower_BlockGroup'
-       % Pall needs to be the structure containing time normalized, average
-       % Pall is the AllData_PSD_Warped.mat
-       % patterned PSDs so the output  of Pall  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned' , Dall, subjNum);
-       
-       Pall = Dall;
-       Pall.Fast = zeros(size(Pall.TN));
-       E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
-       E.NumWarpSamp([1 3 6 10 14]) = NumWarpSampFast;
-       fastBlock = horzcat(blockGroups{1} , blockGroups{3} , blockGroups{6}, blockGroups{10},blockGroups{14});
-       Pall.Fast(ismember(Pall.BN , fastBlock)) = 1;
-       P = [];
-       for BG = 1:length(blockGroups)
-           for bn = 1:length(E.blockGroups{BG})
-               BN = E.blockGroups{BG}(bn);
-               filename = [mainDir ,  'Raw_Decomp_B' , num2str(BN),'.mat'];
-               Pall = getrow(Dall , Dall.BN == BN);
-               for tn = 1:length(Pall.TN)
-                   trialName = ['DEC',num2str(tn)];
-                   A = load(filename , trialName);
-                   temp = eval(['10*log10(abs(A.',trialName,'.decompTR));;']);
-                   Pall.AvgPowTR{tn,1} = squeeze(mean(temp  , 3));
-                   temp = eval(['10*log10(abs(A.',trialName,'.decompBefTR));;']);
-                   Pall.AvgPowBL{tn,1} = squeeze(mean(temp  , 3));
-                   temp = eval(['10*log10(abs(A.',trialName,'.decompAftTR));;']);
-                   Pall.AvgPowAF{tn,1} = squeeze(mean(temp  , 3));
-               end
-               P = addstruct(P,Pall);
-           end
-
-           clear tempPow AvgPow tcount F
-           saveName = [mainDir,'AverageSpectBG',num2str(BG) , '.mat'];
-           
-           E1 = getrow(E ,  BG);
-           
-           for sn = 1:length(E1.SN{1})
-               %             NEM = E.NEM{1}(sn , :);
-               id = ismember(P.BN , E1.blockGroups{1}) & ismember(P.seqNumb , E1.SN{1}(sn));
-               F = getrow(P , id);
-               % sum the warped PSDs insife the F structure
-               tcount = 1;
-               for tn = 1:length(F.AvgPowTR)
-                   if isequal(length(F.AvgPowTR{tn}) , numFreqBins)
-                       tempPowTR(tcount,:,:) = F.AvgPowTR{tn};
-                       tempPowBL(tcount,:,:) = F.AvgPowBL{tn};
-                       tempPowAF(tcount,:,:) = F.AvgPowAF{tn};
-                       tcount = tcount +1;
-                   end
-               end
-               AvgPowTR{sn,1} = squeeze(nanmean(tempPowTR , 1));
-               AvgPowBL{sn,1} = squeeze(nanmean(tempPowBL , 1));
-               AvgPowAF{sn,1} = squeeze(nanmean(tempPowAF , 1));
-               clear tempPowTR tempPowBL tempPowAF
-           end
-           
-           E1.AvgPowTR = AvgPowTR;
-           E1.AvgPowBL = AvgPowBL;
-           E1.AvgPowAF = AvgPowAF;
-           Pall = E1;
-           save(saveName , 'Pall');
-       end
+        % Pall needs to be the structure containing time normalized, average
+        % Pall is the AllData_PSD_Warped.mat
+        % patterned PSDs so the output  of Pall  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned' , Dall, subjNum);
+        
+        Pall = Dall;
+        Pall.Fast = zeros(size(Pall.TN));
+        E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
+        E.NumWarpSamp([1 3 6 10 14]) = NumWarpSampFast;
+        fastBlock = horzcat(blockGroups{1} , blockGroups{3} , blockGroups{6}, blockGroups{10},blockGroups{14});
+        Pall.Fast(ismember(Pall.BN , fastBlock)) = 1;
+        P = [];
+        for BG = 1:length(blockGroups)
+            for bn = 1:length(E.blockGroups{BG})
+                BN = E.blockGroups{BG}(bn);
+                filename = [mainDir ,  'Raw_Decomp_B' , num2str(BN),'.mat'];
+                Pall = getrow(Dall , Dall.BN == BN);
+                for tn = 1:length(Pall.TN)
+                    trialName = ['DEC',num2str(tn)];
+                    A = load(filename , trialName);
+                    temp = eval(['10*log10(abs(A.',trialName,'.decompTR));;']);
+                    Pall.AvgPowTR{tn,1} = squeeze(mean(temp  , 3));
+                    temp = eval(['10*log10(abs(A.',trialName,'.decompBefTR));;']);
+                    Pall.AvgPowBL{tn,1} = squeeze(mean(temp  , 3));
+                    temp = eval(['10*log10(abs(A.',trialName,'.decompAftTR));;']);
+                    Pall.AvgPowAF{tn,1} = squeeze(mean(temp  , 3));
+                end
+                P = addstruct(P,Pall);
+            end
+            
+            clear tempPow AvgPow tcount F
+            saveName = [mainDir,'AverageSpectBG',num2str(BG) , '.mat'];
+            
+            E1 = getrow(E ,  BG);
+            
+            for sn = 1:length(E1.SN{1})
+                %             NEM = E.NEM{1}(sn , :);
+                id = ismember(P.BN , E1.blockGroups{1}) & ismember(P.seqNumb , E1.SN{1}(sn));
+                F = getrow(P , id);
+                % sum the warped PSDs insife the F structure
+                tcount = 1;
+                for tn = 1:length(F.AvgPowTR)
+                    if isequal(length(F.AvgPowTR{tn}) , numFreqBins)
+                        tempPowTR(tcount,:,:) = F.AvgPowTR{tn};
+                        tempPowBL(tcount,:,:) = F.AvgPowBL{tn};
+                        tempPowAF(tcount,:,:) = F.AvgPowAF{tn};
+                        tcount = tcount +1;
+                    end
+                end
+                AvgPowTR{sn,1} = squeeze(nanmean(tempPowTR , 1));
+                SePowTR{sn , 1} = squeeze(std(tempPowTR , 1))/sqrt(size(tempPowTR , 1));                
+                AvgPowBL{sn,1} = squeeze(nanmean(tempPowBL , 1));
+                SePowBL{sn , 1} = squeeze(std(tempPowBL , 1))/sqrt(size(tempPowBL , 1)); 
+                AvgPowAF{sn,1} = squeeze(nanmean(tempPowAF , 1));
+                SePowAF{sn , 1} = squeeze(std(tempPowAF , 1))/sqrt(size(tempPowAF , 1)); 
+                clear tempPowTR tempPowBL tempPowAF
+            end
+            
+            E1.AvgPowTR = AvgPowTR;
+            E1.AvgPowBL = AvgPowBL;
+            E1.AvgPowAF = AvgPowAF;
+            E1.SePowTR = SePowTR;
+            E1.SePowBL = SePowBL;
+            E1.SePowAF = SePowAF;
+            Pall = E1;
+            save(saveName , 'Pall');
+        end
+        
+    case 'raw_AvgPower_SeqType'
+        % Pall is the AllData_PSD_Warped_SeqType.mat
+        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
+        load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
+        Dall;
+        SeqTrans = [5 11 22 33 44 55 0 1 2 3 4 103 104 203 204;...
+            100 10 10 10 10 10 20 30 30 30 30 40 50 40 50];
+        for sn = 1:length(SeqTrans)
+            id  = Dall.seqNumb == SeqTrans(1 , sn);
+            Dall.seqNumb(id) = SeqTrans(2 , sn);
+        end
+        
+        
+        
+        P = [];
+        for BG = 1:length(blockGroups)
+            for bn = 1:length(E.blockGroups{BG})
+                BN = E.blockGroups{BG}(bn);
+                filename = [mainDir ,  'Raw_Decomp_B' , num2str(BN),'.mat'];
+                Pall = getrow(Dall , Dall.BN == BN);
+                for tn = 1:length(Pall.TN)
+                    trialName = ['DEC',num2str(tn)];
+                    A = load(filename , trialName);
+                    temp = eval(['10*log10(abs(A.',trialName,'.decompTR));;']);
+                    Pall.AvgPowTR{tn,1} = squeeze(mean(temp  , 3));
+                    temp = eval(['10*log10(abs(A.',trialName,'.decompBefTR));;']);
+                    Pall.AvgPowBL{tn,1} = squeeze(mean(temp  , 3));
+                    temp = eval(['10*log10(abs(A.',trialName,'.decompAftTR));;']);
+                    Pall.AvgPowAF{tn,1} = squeeze(mean(temp  , 3));
+                end
+                P = addstruct(P,Pall);
+            end
+            
+            clear tempPow AvgPow tcount F
+            saveName = [mainDir,'AverageSpect_SeqType',num2str(BG) , '.mat'];
+            
+            E1 = getrow(E ,  BG);
+            
+            for sn = 1:length(E1.SN{1})
+                
+                %             NEM = E.NEM{1}(sn , :);
+                id = ismember(P.BN , E1.blockGroups{1}) & ismember(P.seqNumb , E1.SN{1}(sn));
+                F = getrow(P , id);
+                % sum the warped PSDs insife the F structure
+                tcount = 1;
+                for tn = 1:length(F.AvgPowTR)
+                    if isequal(length(F.AvgPowTR{tn}) , numFreqBins)
+                        tempPowTR(tcount,:,:) = F.AvgPowTR{tn};
+                        tempPowBL(tcount,:,:) = F.AvgPowBL{tn};
+                        tempPowAF(tcount,:,:) = F.AvgPowAF{tn};
+                        tcount = tcount +1;
+                    end
+                end
+                AvgPowTR{sn,1} = squeeze(nanmean(tempPowTR , 1));
+                SePowTR{sn , 1} = squeeze(std(tempPowTR , 1))/sqrt(size(tempPowTR , 1));                
+                AvgPowBL{sn,1} = squeeze(nanmean(tempPowBL , 1));
+                SePowBL{sn , 1} = squeeze(std(tempPowBL , 1))/sqrt(size(tempPowBL , 1)); 
+                AvgPowAF{sn,1} = squeeze(nanmean(tempPowAF , 1));
+                SePowAF{sn , 1} = squeeze(std(tempPowAF , 1))/sqrt(size(tempPowAF , 1)); 
+                clear tempPowTR tempPowBL tempPowAF
+            end
+            
+            E1.AvgPowTR = AvgPowTR;
+            E1.AvgPowBL = AvgPowBL;
+            E1.AvgPowAF = AvgPowAF;
+            E1.SePowTR = SePowTR;
+            E1.SePowBL = SePowBL;
+            E1.SePowAF = SePowAF;
+            Pall = E1;
+            save(saveName , 'Pall');
         end
 end
+
 
