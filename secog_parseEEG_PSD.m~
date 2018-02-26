@@ -330,14 +330,15 @@ switch what
         clear Dall
         saveName = [saveDir,'AllData_PSD_StimNorm.mat'];
         save(saveName , 'Pall' , '-v7.3');
-
+        
+        saveName = [saveDir,'AllData_Events.mat'];
+        save(saveName , 'Events' , '-v7.3');
     case 'TimeWarpPSD_Raw_Binned'
         % this case loads up it's own input so the Dall structure can be left blac
         load([saveDir,'AllData_Events.mat']);
         Fs = 1024;
         Fs_ds = floor(Fs/DownsampleRate);
         % find average event markers
-        Events  = secog_addEventMarker(Dall,subjNum, Fs_ds, 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
         E  = secog_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
         save([saveDir , 'AllData_AvgMarker.mat'] , 'E');
         BN = unique(Events.BN);
@@ -373,12 +374,12 @@ switch what
             D.NumWarpSamp = NumWarpSampSlow* ones(size(D.TN));
             D.NumWarpSamp(logical(D.Fast)) = NumWarpSampFast;
             for tn = 1:length(D.TN)
-                if length(find(D.NormEventMarker{tn})) == D.seqlength(tn) +1 & ~D.isError(tn) & length(D.EventMarker{tn})>D.NumWarpSamp(tn)
+                if length(find(D.NormTime{tn})) == D.seqlength(tn) +1 & ~D.isError(tn) & length(D.RealTime{tn})>D.NumWarpSamp(tn)
                     % check which block group this block falls into
                     
                     A = nPSD{tn};
                     % the normalized event markers in trial tn
-                    idx = [0 find(D.NormEventMarker{tn}) D.NumWarpSamp(tn)];
+                    idx = [0 find(D.NormTime{tn}) D.NumWarpSamp(tn)];
                     
                     % find the row number corresponding to the seqNumb
                     sn = find(E.SN{BG}==D.seqNumb(tn));
@@ -448,7 +449,6 @@ switch what
         Fs = 1024;
         Fs_ds = floor(Fs/DownsampleRate);
         % find average event markers
-        Events  = secog_addEventMarker(Dall,subjNum, Fs_ds, 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
         E  = secog_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern_seqType' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
         
         % Define sequence numbers and their transformations:
@@ -490,12 +490,12 @@ switch what
             D.NumWarpSamp = NumWarpSampSlow* ones(size(D.TN));
             D.NumWarpSamp(logical(D.Fast)) = NumWarpSampFast;
             for tn = 1:length(D.TN)
-                if length(find(D.NormEventMarker{tn})) == D.seqlength(tn) +1 & ~D.isError(tn) & length(D.EventMarker{tn})>D.NumWarpSamp(tn)
+                if length(find(D.NormTime{tn})) == D.seqlength(tn) +1 & ~D.isError(tn) & length(D.RealTime{tn})>D.NumWarpSamp(tn)
                     % check which block group this block falls into
                     
                     A = nPSD{tn};
                     % the normalized event markers in trial tn
-                    idx = [0 find(D.NormEventMarker{tn}) D.NumWarpSamp(tn)];
+                    idx = [0 find(D.NormTime{tn}) D.NumWarpSamp(tn)];
                     
                     % find the row number corresponding to the seqNumb
                     sn = find(E.SN{BG}==D.seqNumb(tn));
@@ -557,8 +557,7 @@ switch what
         Fs = 1024;
         Fs_ds = floor(Fs/DownsampleRate);
         % find average event markers
-        Events  = secog_addEventMarker(Dall,subjNum, Fs_ds, 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
-        E  = secog_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
+        E  = secog_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
         BN = unique(Events.BN);
         
         Pall_binned = [];
@@ -589,7 +588,9 @@ switch what
                 end
             end
             for tn = 3:length(D.TN)
-
+                if tn == 21
+                    keyboard;
+                end
                 [bn tn]
                 trialName = ['DEC',num2str(tn)];
                 A = load(Bname , trialName);
@@ -599,12 +600,12 @@ switch what
                 AvgPowBL = squeeze(mean(tempbl  , 3));
                 tempaf = eval(['10*log10(abs(A.',trialName,'.decompAftTR).^2);']);
                 AvgPowAF = squeeze(mean(tempaf  , 3));
-                if  ~D.isError(tn)
+                if  ~D.isError(tn) & 
                     % check which block group this block falls into
                     tempAll = cat(3 , tempbl , temptr , tempaf);
                     A  = tempAll  - repmat(AvgPowBL , 1,1,size(tempAll , 3));
                     % the normalized event markers in trial tn
-                    idx = find(D.EventMarker{tn});
+                    idx = find(D.RealTime{tn});
                     idx = [idx , idx(end) + 30]; % take the last event with 300 ms after the last press
                     for e = 1:length(idx)-1
                         PSD_Aligned{tn,e} = A(:,:,idx(e)-10:idx(e+1) - 10);
@@ -630,7 +631,6 @@ switch what
         Fs = 1024;
         Fs_ds = floor(Fs/DownsampleRate);
         % find average event markers
-        Events  = secog_addEventMarker(Dall,subjNum, Fs_ds, 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
         E  = secog_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern_seqType' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
         save([saveDir , 'AllData_AvgMarker_SeqType.mat'], 'E');
         BN = unique(Events.BN);

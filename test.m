@@ -15,31 +15,36 @@ end
 %% Calculate the PSDs
 load('AllData_Behav.mat')
 chans = [3:15 , 99:109 , 121:129 ,36];
-
+load('AllData_Events.mat')
 Dout  = secog_parseEEG_PSD('ParseEEG-freqDecomp' , Dall, 1 , 'Channels' , chans);
-
-
 Dout  = secog_parseEEG_PSD('ParseEEG-calc_norm_PSD' , Dall, 1 , 'Channels' , chans);
 % time warp
 Dout  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned' , Events, 1);
 Dout  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Events, 1);
+Dout  = secog_parseEEG_PSD('AlignEvents_SeqType' , Events, 1);
+Dout  = secog_parseEEG_PSD('AlignEvents_SeqType_Warped' , Events, 1);
 
 
 cd('/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/P2')
 load('AllData_PSD_Warped.mat')
-secog_BlockGroupAverage(Pall,1,'raw_BlockGroup', 'Channels' , chans)
+secog_BlockGroup(Pall,1,'raw_BlockGroup', 'Channels' , chans)
 %% average pattern calculation
 load('AllData_PSD_Warped.mat')
-secog_BlockGroupAverage(Pall,1,'binned_BlockGroup', 'Channels' , chans)
+secog_BlockGroup(Pall,1,'binned_BlockGroup', 'Channels' , chans)
+secog_BlockGroup(Pall,1,'raw_BlockGroup', 'Channels' , chans)
 
 load('AllData_PSD_Warped_SeqType.mat')
-secog_BlockGroupAverage(Pall,1,'binned_SeqType', 'Channels' , chans)  
+secog_BlockGroup(Pall,1,'raw_SeqType', 'Channels' , chans)  
+secog_BlockGroup(Pall,1,'binned_SeqType', 'Channels' , chans)  
 
 
 
-secog_BlockGroupAverage([],1,'raw_SeqType', 'Channels' , chans)
-secog_BlockGroupAverage([],1,'raw_AvgPower_BlockGroup', 'Channels' , chans)
-secog_BlockGroupAverage([],1,'raw_AvgPower_SeqType', 'Channels' , chans)
+secog_BlockGroup([],1,'raw_AvgPower_BlockGroup', 'Channels' , chans)
+secog_BlockGroup([],1,'raw_AvgPower_SeqType', 'Channels' , chans)
+secog_BlockGroup([],1,'raw_Power_SeqType', 'Channels' , chans)
+secog_BlockGroup([],1,'binned_Power_SeqType', 'Channels' , chans)
+secog_BlockGroup([],1,'Aligned_SeqType', 'Channels' , chans)
+secog_BlockGroup([],1,'AlignedWarped_SeqType', 'Channels' , chans)
 
 
 
@@ -52,17 +57,19 @@ secog_BlockGroupAverage([],1,'raw_AvgPower_SeqType', 'Channels' , chans)
 %      'raw_SingleTrial'
 %      'raw_BlockGroup'
 %      'raw_BlockGroup_AvgChann'
-blockGroupNames = {'SingleFingNat' , 'SingleFingSlow' , 'SingleFingFast' , 'Intermixed1' , 'Intermixed2' , 'ChunkDay1' , 'Intermixed3' , 'Intermixed4' , 'Intermixed5',...
-    'ChunkDay2' , 'Intermixed6' , 'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9'}';
+{'SingleFingNat' , 'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4',...
+    'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' , 'Intermixed1' , 'Intermixed2' , ...
+    'ChunkDay1' , 'Intermixed3' , 'Intermixed4' , 'Intermixed5', 'ChunkDay2' , 'Intermixed6' , ...
+    'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9'}';
 
 
-secog_visualizePSD(Pall,1,'raw_BlockGroup' , 'BlockGroup' , 'SingleFingSlow','Chan2Plot' , [20 :22, 24, 12, 14],'Channels' , chans) % PMd
+secog_visualizePSD(Pall,1,'raw_BlockGroup' , 'BlockGroup' , 'SingleFingSlow1','Chan2Plot' , [12, 14],'Channels' , chans) % PMd
 secog_visualizePSD(Pall,1,'raw_BlockGroup' , 'BlockGroup' , 'SingleFingSlow','Chan2Plot' , [27:30],'Channels' , chans) % SMA
-secog_visualizePSD(Pall,1,'binned_BlockGroup' , 'BlockGroup' , 'SingleFingFast','Chan2Plot' , [20 :22, 24, 12, 14],'Channels' , chans); % PMd
+secog_visualizePSD(Pall,1,'binned_BlockGroup' , 'BlockGroup' , 'Intermixed5','Chan2Plot' , [20 :22, 24, 12, 14],'Channels' , chans); % PMd
 secog_visualizePSD(Pall,1,'binned_BlockGroup' , 'BlockGroup' , 'SingleFingFast','Chan2Plot' , [27:30],'Channels' , chans); % SMA
 
-secog_visualizePSD(Pall,1,'raw_BlockGroup_SeqType' , 'BlockGroup' , 'Intermixed5','Chan2Plot' , [28],'Channels' , chans); % SMA
-secog_visualizePSD(Pall,1,'raw_BlockGroup_SeqType' , 'BlockGroup' , 'ChunkDay2','Chan2Plot' , [24, 12],'Channels' , chans); % PMd
+secog_visualizePSD(Pall,1,'raw_BlockGroup_SeqType' , 'BlockGroup' , 'Intermixed2','Chan2Plot' , [28],'Channels' , chans); % SMA
+secog_visualizePSD(Pall,1,'binned_BlockGroup_SeqType' , 'BlockGroup' , 'SingleFingSlow1','Chan2Plot' , [24, 12],'Channels' , chans); % PMd
 
 
 
@@ -70,8 +77,8 @@ secog_visualizePSD(Pall,1,'raw_BlockGroup_SeqType' , 'BlockGroup' , 'ChunkDay2',
 secog_visualizePSD(Pall,1,'binned_BlockGroup_SeqType' , 'BlockGroup' , 'SingleFingSlow','Chan2Plot' , [27:30],'Channels' , chans); % SMA
 secog_visualizePSD([],1,'AvgPower_SeqType' , 'BlockGroup' , 'Intermixed5','Chan2Plot' , [27:30],'Channels' , chans); % SMA
 
-secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'Intermixed2','Intermixed5','Intermixed8','Intermixed9'},'Chan2Plot' , [27:30],'Channels' , chans); % SMA\
-secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'Intermixed2','Intermixed5','Intermixed8','Intermixed9'},'Chan2Plot' , [20 :22, 24, 12, 14],'Channels' , chans) % PMd
+secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'Intermixed1','Intermixed5','Intermixed8','Intermixed9'},'Chan2Plot' , [27:30],'Channels' , chans); % SMA\
+secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'Intermixed1','Intermixed5','Intermixed8','Intermixed9'},'Chan2Plot' , [20 :22, 24, 12, 14],'Channels' , chans) % PMd
 
 secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'Intermixed2','Intermixed5','Intermixed8','Intermixed9'},'Chan2Plot' , [28],'Channels' , chans); % SMA\
 secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'Intermixed2','Intermixed5','Intermixed8','Intermixed9'},'Chan2Plot' , [23],'Channels' , chans) % PMd
@@ -79,12 +86,46 @@ secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'Intermixed2',
 
 
 secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'ChunkDay1','ChunkDay2','ChunkDay3'},'Chan2Plot' , [27:30],'Channels' , chans); % SMA\
-secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'ChunkDay1','ChunkDay2','ChunkDay3'},'Chan2Plot' , [20 :22, 24, 12, 14],'Channels' , chans) % PMd
+secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'ChunkDay1','ChunkDay2','ChunkDay3'},'Chan2Plot' , [10 12],'Channels' , chans) % PMd
 
 secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'SingleFingSlow','SingleFingFast'},'Chan2Plot' , [27:30],'Channels' , chans); % SMA\
-secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'SingleFingSlow','SingleFingFast'},'Chan2Plot' , [20 :22, 24, 12, 14],'Channels' , chans) % PMd
+secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'SingleFingSlow','SingleFingFast'},'Chan2Plot' , [10 12],'Channels' , chans) % PMd
 
-secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'Intermixed2','Intermixed5','Intermixed8','Intermixed9'},'Chan2Plot' , [27],'Channels' , chans); % SMA\
+secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'Intermixed1','Intermixed5','Intermixed8','Intermixed9'},'Chan2Plot' , [27:30],'Channels' , chans); % SMA\
+secog_visualizePSD([],1,'AvgPower_SeqType_comp' , 'BlockGroup' , {'Intermixed1','Intermixed5','Intermixed8','Intermixed9'},'Chan2Plot' , [10 12],'Channels' , chans); % PMD\
+
+secog_visualizePSD([],1,'Compare_SeqType_TemporalPattern' ,'BlockGroup' , {'Intermixed2','Intermixed5','Intermixed8','Intermixed9'},...
+    'Chan2Plot' , [27:30],'Channels' , chans , 'bandofInterest' , 6); % SMA\
+
+secog_visualizePSD([],1,'Compare_SeqType_TemporalPattern' ,'BlockGroup' , {'Intermixed1','Intermixed5','Intermixed8','Intermixed9'},...
+    'Chan2Plot' , [10 12],'Channels' , chans , 'bandofInterest' , 4); % SMA\
+
+secog_visualizePSD([],1,'Compare_SeqType_TemporalPattern' ,'BlockGroup' , {'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4'},...
+    'Chan2Plot' , [10 12],'Channels' , chans , 'bandofInterest' , 6); % SMA\
+
+secog_visualizePSD([],1,'Aligned_SeqType' ,'BlockGroup' , {'Intermixed2','Intermixed5','Intermixed8','Intermixed9'},...
+    'Chan2Plot' , [27:30],'Channels' , chans , 'bandofInterest' , 6); % SMA\
+
+secog_visualizePSD([],1,'Aligned_SeqType' ,'BlockGroup' , {'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4'},...
+    'Chan2Plot' , [27:30],'Channels' , chans , 'bandofInterest' , 4); % SMA\
+
+secog_visualizePSD([],1,'Aligned_SeqType' ,'BlockGroup' , {'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' },...
+    'Chan2Plot' , [27:30],'Channels' , chans , 'bandofInterest' , 6); % SMA\
+
+secog_visualizePSD([],1,'Aligned_SeqType' ,'BlockGroup' , {'ChunkDay1','ChunkDay2','ChunkDay3'},...
+    'Chan2Plot' , [27:30],'Channels' , chans , 'bandofInterest' , 6); % SMA\
+
+
+secog_visualizePSD([],1,'AlignedWarped_SeqType' ,'BlockGroup' , {'ChunkDay1','ChunkDay2','ChunkDay3'},...
+    'Chan2Plot' , [27:30],'Channels' , chans , 'bandofInterest' , 6); % SMA\
+secog_visualizePSD([],1,'AlignedWarped_SeqType' ,'BlockGroup' , {'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4'},...
+    'Chan2Plot' , [27:30],'Channels' , chans , 'bandofInterest' , 6); % SMA\
+secog_visualizePSD([],1,'AlignedWarped_SeqType' ,'BlockGroup' , {'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4'},...
+    'Chan2Plot' , [27:30],'Channels' , chans , 'bandofInterest' , 6); % SMA\
+secog_visualizePSD([],1,'AlignedWarped_SeqType' ,'BlockGroup' , {'Intermixed2','Intermixed5','Intermixed8','Intermixed9'},...
+    'Chan2Plot' , [27:30],'Channels' , chans , 'bandofInterest' , 6); % SMA\
+
+
 
 secog_visualizePSD(Pall,1,'raw_SingleTrial' , 'TBNum', [10 1], 'Chan2Plot' , [23 8],'Channels' , chans)
 
@@ -110,5 +151,9 @@ secog_visualizePSD(Pall,1,'binned_BlockGroup' , 'BlockGroup' , 'SingleFingSlow',
 secog_visualizePSD(Pall,1,'binned_BlockGroup' , 'BlockGroup' , blockGroupNames{3},'Chan2Plot' , [123:126])
 %% sig test
 
-secog_sigTest('seqs_across_days' , 1, 'BlockGroup' , {'Intermixed2','Intermixed5','Intermixed8','Intermixed9'} , 'Groups' , [1 2 3 4] , 'Chan' , [27:30])
-
+secog_sigTest('seqs_across_days' , 1, 'Groups' , [1 2 3 4] , 'Chan' , [27:30]);% SMA
+secog_sigTest('seqs_across_days' , 1, 'Groups' , [1 2 3 4] , 'Chan' , [12, 10])% PMD 
+secog_sigTest('chunks_across_days' , 1, 'Groups' , [1 2 3] , 'Chan' , [27:30]) 
+secog_sigTest('chunks_across_days' , 1, 'Groups' , [1 2 3] , 'Chan' , [12, 10])% PMD 
+secog_sigTest('Alined_Sequences' , 1, 'Groups' , [1 2 3 4] , 'Chan' , [27:30])% PMD 
+secog_sigTest('Alined_SingleFinger' , 1, 'Groups' , [1 2 3 4] , 'Chan' , [27:30])% PMD 

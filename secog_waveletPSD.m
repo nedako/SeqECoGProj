@@ -5,6 +5,15 @@ function [PSD , BandInfo] = secog_waveletPSD(EEG , Fs , varargin)
 % PSD is a numFreqBins by length(EEG) tensor
 % Neda Kordjazi
 c = 1;
+
+numCycles = 7;
+FreqRange = [2 180];
+numFreqBins = 90;
+DownsampleRate = 10;
+AvgOverBand = 0;
+
+
+
 while(c<=length(varargin))
     switch(varargin{c})
         
@@ -35,21 +44,7 @@ while(c<=length(varargin))
     end
 end
 
-if ~exist('numCycles')
-    numCycles = 7;
-end
-if ~exist('FreqRange')
-    FreqRange = [2 180];
-end
-if ~exist('numFreqBins')
-    numFreqBins = 90;
-end
-if ~exist('DownsampleRate')
-    DownsampleRate = 10;
-end
-if ~exist('AvgOverBand')
-    AvgOverBand = 0;
-end
+
 
 
 min_freq =  FreqRange(1);

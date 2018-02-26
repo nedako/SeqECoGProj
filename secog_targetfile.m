@@ -6,8 +6,8 @@ function secog_targetfile(SubCode,genchunks, CMB , hand)
 % SubCode = 'SZ';
 % GroupCode= 1;
 % provode CMB from the subject's target file folder only if you already have the chunks and need to  produce more sequences
-% baseDir = '/Users/nedakordjazi/Documents/SeqECoG/TargetFiles';
-baseDir = '/Users/nedakordjazi/Documents/SeqECoG/TargetFIles';
+baseDir = '/Users/nkordjazi/Documents/SeqECoG/TargetFiles';
+% baseDir = '/Users/nedakordjazi/Documents/SeqECoG/TargetFIles';
 cd(baseDir)
 Fname  = [SubCode , '_tgtFiles'];
 mkdir(Fname)
@@ -119,7 +119,7 @@ if ~ repeating
             ChunkTrain.cueC(i,:) = {'£'} ;
         end
         ChunkTrain = addstruct(AAA , ChunkTrain);
-        name = [Fname ,'/'  , SubCode , '_CT_B' , num2str(e) , '.tgt'];
+        name = [Fname ,'/'  , SubCode , 'CTB' , num2str(e) , '.tgt'];
         dsave(name,orderfields(ChunkTrain,OrderFields));
         clear x name
         
@@ -171,7 +171,7 @@ else
             end
         end
         repChunkTrain = addstruct(AAA , repChunkTrain);
-        name = [Fname ,'/'  , SubCode , '_CT_B' , num2str(e) , '.tgt'];
+        name = [Fname ,'/'  , SubCode , 'CTB' , num2str(e) , '.tgt'];
         dsave(name,orderfields(repChunkTrain,OrderFields));
         clear x name
         
@@ -253,7 +253,7 @@ if ~repeating
             end
         end
         RandomSeq  = addstruct(AAA , RandomSeq);
-        name = [Fname ,'/'  , SubCode , '_RAND_B' , num2str(e) , '.tgt'];
+        name = [Fname ,'/'  , SubCode , 'RANDB' , num2str(e) , '.tgt'];
         dsave(name,orderfields(RandomSeq,OrderFields));
         
         clear x
@@ -312,7 +312,7 @@ else
             end
         end
         RS =  addstruct(AAA,RS);
-        name = [Fname ,'/'  , SubCode , '_RAND_B' , num2str(e) , '.tgt'];
+        name = [Fname ,'/'  , SubCode , 'RANDB' , num2str(e) , '.tgt'];
         dsave(name,orderfields(RS,OrderFields));
         
         clear x
@@ -376,7 +376,7 @@ if ~repeating
             end
         end
         ChunkArrangeLearn = addstruct(AAA ,  ChunkArrangeLearn);
-        name = [Fname ,'/'  , SubCode , '_CAT_B' , num2str(e) , '.tgt'];
+        name = [Fname ,'/'  , SubCode , 'CATB' , num2str(e) , '.tgt'];
         dsave(name,orderfields(ChunkArrangeLearn,OrderFields));
         
         clear x
@@ -452,7 +452,7 @@ else
             cn  = cn + 1;
         end
         ChunkArrangeLearn = addstruct(AAA ,  ChunkArrangeLearn);
-        name = [Fname ,'/'  , SubCode , '_CAT_B' , num2str(e) , '.tgt'];
+        name = [Fname ,'/'  , SubCode , 'CATB' , num2str(e) , '.tgt'];
         dsave(name,orderfields(ChunkArrangeLearn,OrderFields));
         
         clear x
@@ -488,7 +488,7 @@ if ~ repeating
     
     % just generate full horizons for now
     clear Intermixed
-    for e= 1:15
+    for e= 1:40
         RandIndex = randperm(length(Trials));
         RandIndex = RandIndex(1: RandProportion * length(Trials));
         
@@ -561,11 +561,11 @@ if ~ repeating
         end
         switch RandProportion
             case 1/3
-                name = [Fname ,'/'  , SubCode , '_TM_B' , num2str(e) , '.tgt'];
+                name = [Fname ,'/'  , SubCode , 'TMB' , num2str(e) , '.tgt'];
             case 1/2
-                name = [Fname ,'/'  , SubCode , '_HM_B' , num2str(e) , '.tgt'];
+                name = [Fname ,'/'  , SubCode , 'HMB' , num2str(e) , '.tgt'];
             case 2/3
-                name = [Fname ,'/'  , SubCode , '_2TM_B', num2str(e) , '.tgt'];
+                name = [Fname ,'/'  , SubCode , '2TMB', num2str(e) , '.tgt'];
         end
         Intermixed = addstruct(AAA , Intermixed);
         dsave(name,orderfields(Intermixed,OrderFields));
@@ -591,7 +591,7 @@ else
     ElimChunkStart  = 1; % 1 means that random seqs that start with a known chunk will be elimminated
     %     StimTimeLim = zeros(length(Trials) , 1);
     CMB.DesiredCnhkargmnt = [3 4 ;3 4; 4 3; 4 3];
-    for e= 1:15
+    for e= 1:40
         %         ChunkArrangeLearn.StimTimeLim = StimTimeLim;
         X = [];
         
@@ -711,11 +711,11 @@ else
         
         switch RandProportion
             case 1/3
-                name = [Fname ,'/'  , SubCode , '_TM_B' , num2str(e) , '.tgt'];
+                name = [Fname ,'/'  , SubCode , 'TMB' , num2str(e) , '.tgt'];
             case 1/2
-                name = [Fname ,'/'  , SubCode , '_HM_B' , num2str(e) , '.tgt'];
+                name = [Fname ,'/'  , SubCode , 'HMB' , num2str(e) , '.tgt'];
             case 2/3
-                name = [Fname ,'/'  , SubCode , '_2TM_B', num2str(e) , '.tgt'];
+                name = [Fname ,'/'  , SubCode , '2TMB', num2str(e) , '.tgt'];
         end
         
         Intermixed = addstruct(AAA , Intermixed);
@@ -747,7 +747,7 @@ for press= 1:7
 end
 tempCL = rem(ChunkNumb , 100);
 CLA = [11 ;22;33;44;55];
-Trials = 1:25;
+Trials = 1:10;
 %     StimTimeLim = zeros(length(Trials) , 1);
 
 clear SingleFing
@@ -779,7 +779,7 @@ for e= 1:5
         end
     end
     SingleFing = addstruct(AAA , SingleFing);
-    name = [Fname ,'/'  , SubCode , '_SF_B' , num2str(e) , '.tgt'];
+    name = [Fname ,'/'  , SubCode , 'SFB' , num2str(e) , '.tgt'];
     dsave(name,orderfields(SingleFing,OrderFields));
     
     clear x
