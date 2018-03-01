@@ -42,8 +42,8 @@ Dout.blockGroupNames = {'SingleFingNat' , 'SingleFingSlow1' , 'SingleFingSlow2' 
     'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9'}';
 
 Dall.Fast = zeros(size(Dall.TN));
-fastBlock = horzcat(Dout.blockGroups{1} ,Dout.blockGroups{6} , Dout.blockGroups{7},Dout.blockGroups{8},Dout.blockGroups{9},...
-    Dout.blockGroups{12},Dout.blockGroups{16},Dout.blockGroups{20});
+fastBlock = horzcat(Dout(subjNum).blockGroups{1} ,Dout(subjNum).blockGroups{6} , Dout(subjNum).blockGroups{7},Dout(subjNum).blockGroups{8},Dout(subjNum).blockGroups{9},...
+    Dout(subjNum).blockGroups{12},Dout(subjNum).blockGroups{16},Dout(subjNum).blockGroups{20});
 Dall.Fast(ismember(Dall.BN , fastBlock)) = 1;
 %%  control for too short IPIs that the keys get accidentally pressed
 for i = 1:length(Dall.TN)
@@ -111,15 +111,15 @@ switch what
         % we want the average pattern to be calculated across the groups of 3 block of seq training in between the chunk training blocks
         % this should be defined for every participant
         
-        for BG = 1:length(Dout.blockGroups)
-            D1 = getrow(Dall , ~Dall.isError & ismember(Dall.BN , Dout.blockGroups{BG}));
+        for BG = 1:length(Dout(subjNum).blockGroups)
+            D1 = getrow(Dall , ~Dall.isError & ismember(Dall.BN , Dout(subjNum).blockGroups{BG}));
             Dout.SN{BG,1} = unique(D1.seqNumb);
             Dout.SN{BG,1} = Dout.SN{BG,1};
             for sn= 1:length(Dout.SN{BG,1})
                 clear EventMarker NormEventMarker EM NEM diffNEM
                 EventMarker = [];
                 NormEventMarker = [];
-                D = getrow(D1 , ismember(D1.seqNumb , Dout.SN{BG,1}(sn)) & ~D1.isError & ismember(D1.BN , Dout.blockGroups{BG,1}));
+                D = getrow(D1 , ismember(D1.seqNumb , Dout.SN{BG,1}(sn)) & ~D1.isError & ismember(D1.BN , Dout(subjNum).blockGroups{BG,1}));
                 D.seqlength(isnan(D.seqlength)) = 1;
                 SL = unique(D.seqlength);
                 Dout.EM{BG,1}(sn , :)= nan(1,max(Dall.seqlength)+1);
@@ -174,9 +174,9 @@ switch what
             id  = Dall.seqNumb == SeqTrans(1 , sn);
             Dall.seqNumb(id) = SeqTrans(2 , sn);
         end
-        for BG = 1:length(Dout.blockGroups)
+        for BG = 1:length(Dout(subjNum).blockGroups)
             
-            D1 = getrow(Dall , ~Dall.isError & ismember(Dall.BN , Dout.blockGroups{BG}));
+            D1 = getrow(Dall , ~Dall.isError & ismember(Dall.BN , Dout(subjNum).blockGroups{BG}));
             Dout.SN{BG,1} = unique(D1.seqNumb);
             Dout.SN{BG,1} = Dout.SN{BG,1};
             for sn= 1:length(Dout.SN{BG,1})

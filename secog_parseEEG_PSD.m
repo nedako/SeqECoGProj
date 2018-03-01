@@ -3,6 +3,9 @@ function Dout  = secog_parseEEG_PSD(what , Dall , subjNum, varargin)
 %% It also calculates the PSD on the whole block and then parses up the PSD inot trials. This is mainly to avoid any window effect on single trials
 c = 1;
 %% setup the defaults and deal with the varargin
+subjname = {'P2' , 'P4'};
+mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} , '/Packed/'] ;
+saveDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} , '/'] ;
 DownsampleRate = 10;
 NormType = 'stim';
 NumWarpSampFast = 200;
@@ -10,17 +13,19 @@ NumWarpSampSlow = 500;
 TimeDelay = 0.5; % sec
 FreqRange = [2 180];
 numFreqBins = 90;
-Channels = [1:129];
+load([saveDir , 'ChanLabels.mat']);
+Channels = [1:length(ChanLabels)];
 %%  control for too short IPIs that the keys get accidentally pressed
-for i = 1:length(Dall.TN)
-    if sum(Dall.IPI(i,:)<120)
-        Dall.isError(i) =1;
+if subjNum==1
+    for i = 1:length(Dall.TN)
+        if sum(Dall.IPI(i,:)<120)
+            Dall.isError(i) =1;
+        end
     end
 end
 %%
 while(c<=length(varargin))
     switch(varargin{c})
-        
         case {'NormType'}
             % Type of PSD normalization
             % Default : 'stim' normalize power to TimeDelay ms before the stimulation comes on
@@ -75,7 +80,8 @@ blockGroupNames = {'SingleFingNat' , 'SingleFingSlow1' , 'SingleFingSlow2'  , 'S
     'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9'}';
 
 Dall.Fast = zeros(size(Dall.TN));
-fastBlock = horzcat(blockGroups{1} , blockGroups{3} , blockGroups{6}, blockGroups{10},blockGroups{14});
+fastBlock = horzcat(blockGroups{1} ,blockGroups{6} , blockGroups{7}, blockGroups{8}, blockGroups{9},...
+    blockGroups{12}, blockGroups{16}, blockGroups{20});
 Dall.Fast(ismember(Dall.BN , fastBlock)) = 1;
 min_freq =  FreqRange(1);
 max_freq = FreqRange(2);
@@ -87,9 +93,8 @@ for b = 1:length(BandInfo.bands)
 end
 
 
-subjname = {'P2'};
-mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} , '/Packed/'] ;
-saveDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} , '/'] ;
+
+
 cd(mainDir)
 % Import the BLock Info
 [~, ~, BlockInfo] = xlsread([mainDir , 'BlockInfo.xlsx'],'Sheet1');
@@ -102,12 +107,14 @@ Fs = 1024;
 Fs_ds = Fs/DownsampleRate;
 clearvars idx;
 Dout = [];
+
+
 %% chop up the EEG data into trials, and filter out the power line noise
 switch what
     case 'ParseEEG-freqDecomp'
         
         %% preprocess EEG and filtering
-        load([saveDir , 'ChanLabels.mat']);
+        
         ChanLabels = ChanLabels(Channels);
         % Q : quality factor is the center frequency divided by the bandwidth.
         % Q = 35;
@@ -130,11 +137,10 @@ switch what
         
         %%
         Events = [];
-        for i = 1:size(BlockInfo , 1)
+        for i = 11:size(BlockInfo , 1)
             clear Pall
             
             D = getrow(Dall , Dall.BN == i);
-            E = getrow(Dall , Dall.BN == i);
             fName = BlockInfo{i,4};
             if ~strcmp(fName , fName1)
                 load(fName);
@@ -144,59 +150,82 @@ switch what
             end
             %     extract the data for the block at hand
             BlockRang = [BlockInfo{i,2} : BlockInfo{i,3}];
-            Beeg = getrow(Data , Channels);
-            Beeg.values = Beeg.values(:,BlockRang);
-            % get the indecies for starts ans ends of the trials
-            marker = Beeg.values(find(strcmp(Beeg.label , 'TTL')) , :);
-            marker = [0 diff(marker <-2*10^6)];
-            for ch = 1:size(Beeg.values , 1)
-                B = Beeg.values(ch , :);
-                A = filter(b,a , B);
-                Beeg.values(ch , :) = A;
-            end
-            start_tr = find(marker == 1); % starts of trials
-            % right now the end TTl pulse is being sent by the releas eof
-            % the last finger, so is not aligned to the last press time. so
-            % better define it this way for trials with presses
-            end_tr = find(marker == -1);  % ends of trials
-            for tn = 3:length(start_tr)
-                if ~isnan(D.AllPressTimes(tn , D.seqlength(tn)))
-                    end_tr(tn) = start_tr(tn) + Fs*(D.AllPressTimes(tn , D.seqlength(tn))/1000)';
+            if ~ismember(BlockRang , -1)
+                Beeg = getrow(Data , Channels);
+                Beeg.values = Beeg.values(:,BlockRang);
+                % get the indecies for starts ans ends of the trials
+                marker = Beeg.values(find(strcmp(Beeg.label , 'TTL')) , :);
+                marker = [0 diff(marker <-2*10^6)];
+                for ch = 1:size(Beeg.values , 1)
+                    B = Beeg.values(ch , :);
+                    A = filter(b,a , B);
+                    Beeg.values(ch , :) = A;
                 end
-            end
-            start_tr = floor(start_tr / DownsampleRate);
-            end_tr = floor(end_tr / DownsampleRate);
-            for ch = 1:size(Beeg.values , 1)
-                Chname{ch} = ['RawEEGpower',num2str(ch)];
-                [REG, BandInfo] = secog_waveletPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate);
-                % normalize each trial to baseline : TimeDelay ms before the stim  onset
-                for tr = 1:length(start_tr)
-                    X = nanmean(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay):start_tr(tr)) , 2);
-                    eval(['D.decompBL{tr,1}(ch , :,:)  = X;']);
-                    
-                    X = REG(:,start_tr(tr) : end_tr(tr));
-                    eval(['D.decompTR{tr,1}(ch , :,:)  = X;']);
-                    
-                    X = REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay) : start_tr(tr)-1);
-                    eval(['D.decompBefTR{tr,1}(ch , :,:)  = X;']);
-                    
-                    X = REG(:,end_tr(tr)+1 : end_tr(tr)+floor(Fs_ds*2*TimeDelay));
-                    eval(['D.decompAftTR{tr,1}(ch , :,:)  = X;']);
+                start_tr = find(marker == 1); % starts of trials
+                % right now the end TTl pulse is being sent by the releas eof
+                % the last finger, so is not aligned to the last press time. so
+                % better define it this way for trials with presses
+                end_tr = find(marker == -1);  % ends of trials
+                for tn = 3:length(start_tr)
+                    if ~isnan(D.AllPressTimes(tn , D.seqlength(tn)))
+                        end_tr(tn) = start_tr(tn) + Fs*(D.AllPressTimes(tn , D.seqlength(tn))/1000)';
+                    end
                 end
-                disp(['PSD calculation for block ' , num2str(i) , ', channel ' , num2str(ch) , ' completed'])
-                clear REG
-            end
-            
-            
-            %% save the unbinned data in separate blocks for managability in size
-            %             save the raw unbinned psd
-            for tn = 1 :length(start_tr)
-                % prepare the individual trials to be saved as the
-                % fileds of a structre to make loading easier
-                eval(['Pall.DEC',num2str(tn),'.decompBL    = D.decompBL{', num2str(tn), '};']);
-                eval(['Pall.DEC',num2str(tn),'.decompTR    = D.decompTR{', num2str(tn), '};']);
-                eval(['Pall.DEC',num2str(tn),'.decompBefTR = D.decompBefTR{', num2str(tn), '};']);
-                eval(['Pall.DEC',num2str(tn),'.decompAftTR = D.decompAftTR{', num2str(tn), '};']);
+                start_tr = floor(start_tr / DownsampleRate);
+                end_tr = floor(end_tr / DownsampleRate);
+                for ch = 1:size(Beeg.values , 1)
+                    Chname{ch} = ['RawEEGpower',num2str(ch)];
+                    [REG, BandInfo] = secog_waveletPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate);
+                    % normalize each trial to baseline : TimeDelay ms before the stim  onset
+                    for tr = 1:length(start_tr)
+                        [ch tr]
+                        X = nanmean(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay):start_tr(tr)) , 2);
+                        eval(['D.decompBL{tr,1}(ch , :,:)  = X;']);
+                        
+                        X = REG(:,start_tr(tr) : end_tr(tr));
+                        eval(['D.decompTR{tr,1}(ch , :,:)  = X;']);
+                        
+                        X = REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay) : start_tr(tr)-1);
+                        eval(['D.decompBefTR{tr,1}(ch , :,:)  = X;']);
+                        
+                        X = REG(:,end_tr(tr)+1 : end_tr(tr)+floor(Fs_ds*2*TimeDelay));
+                        eval(['D.decompAftTR{tr,1}(ch , :,:)  = X;']);
+                    end
+                    disp(['PSD calculation for block ' , num2str(i) , ', channel ' , num2str(ch) , ' completed'])
+                    clear REG
+                end
+                if length(start_tr)<length(D.TN)
+                    missing = abs(length(start_tr)-length(D.TN));
+                    missingTR = [length(D.TN)-(missing-1) : length(D.TN)];
+                    for mtr = missingTR
+                        eval(['D.decompBL{mtr,1}  = NaN']);
+                        eval(['D.decompTR{mtr,1}  = NaN;']);
+                        eval(['D.decompBefTR{mtr,1}= NaN;']);
+                        eval(['D.decompAftTR{mtr,1} = NaN;']);
+                    end
+                end
+                
+                
+                %% save the unbinned data in separate blocks for managability in size
+                %             save the raw unbinned psd
+                for tn = 1 :length(D.TN)
+                    % prepare the individual trials to be saved as the
+                    % fileds of a structre to make loading easier
+                    eval(['Pall.DEC',num2str(tn),'.decompBL    = D.decompBL{', num2str(tn), '};']);
+                    eval(['Pall.DEC',num2str(tn),'.decompTR    = D.decompTR{', num2str(tn), '};']);
+                    eval(['Pall.DEC',num2str(tn),'.decompBefTR = D.decompBefTR{', num2str(tn), '};']);
+                    eval(['Pall.DEC',num2str(tn),'.decompAftTR = D.decompAftTR{', num2str(tn), '};']);
+                end
+            else
+                for tn = 1 :length(D.TN)
+                    % prepare the individual trials to be saved as the
+                    % fileds of a structre to make loading easier
+                    eval(['Pall.DEC',num2str(tn),'.decompBL    = NaN;']);
+                    eval(['Pall.DEC',num2str(tn),'.decompTR    = NaN;']);
+                    eval(['Pall.DEC',num2str(tn),'.decompBefTR = NaN;']);
+                    eval(['Pall.DEC',num2str(tn),'.decompAftTR = NaN;']);
+                end
+                
             end
             saveName = [saveDir,'Raw_Decomp_B',num2str(i) ,'.mat'];
             save(saveName,'-struct','Pall', '-v7.3');
@@ -248,7 +277,6 @@ switch what
             clear Pall
             
             D = getrow(Dall , Dall.BN == i);
-            E = getrow(Dall , Dall.BN == i);
             fName = BlockInfo{i,4};
             if ~strcmp(fName , fName1)
                 load(fName);
@@ -289,13 +317,19 @@ switch what
                     baseline = nanmean(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay):start_tr(tr)) , 2);
                     X = REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay) : end_tr(tr)+floor(Fs_ds*2*TimeDelay));
                     X = (X - repmat(baseline , 1,size(X,2)))./repmat(baseline , 1,size(X,2));
-                    statement1 = ['D.PSD{tr,1}(ch , :,:)  = X;'];
-                    eval(statement1);
+                    eval(['D.PSD{tr,1}(ch , :,:)  = X;']);
                 end
                 disp(['PSD calculation for block ' , num2str(i) , ', channel ' , num2str(ch) , ' completed'])
                 clear REG
             end
-            
+            % in case some trials at the end didnt get recorded on the marker
+            if length(start_tr)<length(D.TN)
+                missing = abs(length(start_tr)-length(D.TN));
+                missingTR = [length(D.TN)-(missing-1) : length(D.TN)];
+                for mtr = missingTR
+                    eval(['D.PSD{mtr,1}  = NaN;']);
+                end
+            end
             
             
             %% find the event markers and normalize the power to TimeDelay ms before the stimulus came on - or press

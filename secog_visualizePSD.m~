@@ -19,9 +19,8 @@ NumWarpSampSlow = 500;
 DownsampleRate = 10;
 FreqRange = [2 180];
 numFreqBins = 90;
-subjname = {'P2' , 'P4'};
-load([saveDir , 'ChanLabels.mat']);
-Channels = length(ChanLabels);
+Channels = 129;
+subjname = {'P2'};
 
 c = 1;
 while(c<=length(varargin))
@@ -99,17 +98,8 @@ load([mainDir , 'AllData_Events.mat'])
 load([mainDir , 'AllData_AvgMarker.mat'])
 
 %% HouseKeeping
-
-% block groupings for subject 1
-BG(1).blockGroups =  {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:7] , [9:11] , [8 12] , [15:17] , [19:21] , [23:25],...
+blockGroups = {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:7] , [9:11] , [8 12] , [15:17] , [19:21] , [23:25],...
     [18 22] , [28:30] , [32:34] , [36:38], [31 35 39],[42:44]}';
-% block groupings for subject 2
-BG(2).blockGroups = {[ ] , [2 8], [14 20 26], [29 38], [], [1 7],[13 19 25], [28 37], [] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
-    [18 24] , [30:32] , [34:36] , [], [27 33],[]}';
-
-% define block types
-blockGroups = BG(subjNum).blockGroups;
-
 blockGroupNames = {'SingleFingNat' , 'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4',...
     'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' , 'Intermixed1' , 'Intermixed2' , ...
     'ChunkDay1' , 'Intermixed3' , 'Intermixed4' , 'Intermixed5', 'ChunkDay2' , 'Intermixed6' , ...
@@ -1087,7 +1077,7 @@ switch what
             end
         end
         titleLab = {'Chunk Boundry Press'};
-        titleLab = [titleLab  , repmat({'Before Chunk Boundry' , 'After Chunk Boundry'} , 1 , .5*(length(chnkInd)-1))];
+        titleLab = [titleLab  , repmat({'Before Chunk Boundry' , 'After Chunk Boundry'} , 1 , length(chnkInd)-1)];
         for evnt = 1:size(D.chunkArrPSD , 2)
             medEventLen = floor(median(cellfun(@length, D.chunkArrPSD(:,evnt))));
             maxLen = max(cellfun(@length, D.chunkArrPSD(:,evnt)));

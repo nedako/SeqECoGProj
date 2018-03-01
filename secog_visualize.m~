@@ -102,8 +102,6 @@ switch what
         
         
         
-        IPIs = getrow(IPI , IPI.seqN > 0);
-        out.IPI = anovan(IPIs.ipi , IPIs.ipiArr,'varnames',{'Within/Between'} , 'display' , 'on' , 'model' , 'full');
         out.IPI_all = anovan(IPI.ipi , IPI.ipiArr,'varnames',{'Random/Within/Between'} , 'display' , 'on' , 'model' , 'full');
 
         h1 = figure('color' , 'white');
@@ -114,7 +112,7 @@ switch what
         dayss = unique(IPI.day);
         for d = 1:length(dayss)
             IPIs = getrow(IPI , IPI.seqN > 0 & IPI.day == dayss(d));
-            out.IPId{d} = anovan(IPIs.ipi , IPIs.ipiArr,'varnames',{'Within/Between'} , 'display' , 'on' , 'model' , 'full');
+            out.IPI{d} = anovan(IPIs.ipi , IPIs.ipiArr,'varnames',{'Within/Between'} , 'display' , 'on' , 'model' , 'full');
             [xs{d},PLOTs{d},ERRORs{d}] = lineplot(IPI.ipiNum,IPI.ipi , 'subset' , IPI.day == dayss(d) & IPI.seqN == 1);
             hold on
             [xra{d},PLOTra{d},ERRORra{d}] = lineplot(IPI.ipiNum,IPI.ipi , 'subset' , IPI.day == dayss(d) & IPI.seqN == 0);
@@ -143,7 +141,7 @@ switch what
             ax = gca;
             ax.FontSize = 20;
             legend([hb,hw,hr] , {'Between chunk IPIs' , 'Within chunk IPIs' , 'Random IPIs'} , 'FontSize' , 20)
-            title(['Within chunk vs Between chunk Chunk IPIs , p(W/B) = ' , num2str(out.IPId{d})],'FontSize' , 16)
+            title(['Within chunk vs Between chunk Chunk IPIs , p(W/B) = ' , num2str(out.IPI)],'FontSize' , 16)
             xlabel('IPI Number', 'FontSize' , 20)
             ylabel('msec'  ,'FontSize' , 20)
             grid on

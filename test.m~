@@ -17,7 +17,7 @@ subjNum = 2;
 load('AllData_Behav.mat')
 chans = [3:15 , 99:109 , 121:129 ,36];
 load('AllData_Events.mat')
-Dout  = secog_parseEEG_PSD('ParseEEG-freqDecomp' , Dall, subjNum);% , 'Channels' , chans);
+Dout  = secog_parseEEG_PSD('ParseEEG-freqDecomp' , Dall, subjNum); ... , 'Channels' , chans);
 Dout  = secog_parseEEG_PSD('ParseEEG-calc_norm_PSD' , Dall, subjNum , 'Channels' , chans);
 % time warp
 Dout  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned' , Events, subjNum);

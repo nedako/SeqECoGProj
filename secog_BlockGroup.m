@@ -62,9 +62,15 @@ ChanLabels = ChanLabels(Channels);
 load([mainDir , 'AllData_Behav.mat'])
 load([mainDir , 'AllData_AvgMarker.mat'])
 
-% define block types
-blockGroups = {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:7] , [9:11] , [8 12] , [15:17] , [19:21] , [23:25],...
+% block groupings for subject 1
+BG(1).blockGroups =  {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:7] , [9:11] , [8 12] , [15:17] , [19:21] , [23:25],...
     [18 22] , [28:30] , [32:34] , [36:38], [31 35 39],[42:44]}';
+% block groupings for subject 2
+BG(2).blockGroups = {[ ] , [2 8], [14 20 26], [29 38], [], [1 7],[13 19 25], [28 37], [] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
+    [18 24] , [30:32] , [34:36] , [], [27 33],[]}';
+
+% define block types
+blockGroups = BG(subjNum).blockGroups;
 blockGroupNames = {'SingleFingNat' , 'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4',...
     'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' , 'Intermixed1' , 'Intermixed2' , ...
     'ChunkDay1' , 'Intermixed3' , 'Intermixed4' , 'Intermixed5', 'ChunkDay2' , 'Intermixed6' , ...
@@ -399,7 +405,7 @@ switch what
         
         
         P = [];
-        for BG = 6:length(blockGroups)
+        for BG = 1:length(blockGroups)
             for bn = 1:length(E.blockGroups{BG})
                 BN = E.blockGroups{BG}(bn);
                 filename = [mainDir ,  'warped_PSD_B_SeqType' , num2str(BN),'.mat'];
