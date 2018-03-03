@@ -1,7 +1,7 @@
 %% get the behavioral data
 subjname = {'P2' , 'P4'};
-subjNum = 2;
-Dall=secog_analyze ('sing_subj' , 'subjCode' , 'P4');
+subjNum = 1;
+Dall=secog_analyze ('sing_subj' , 'subjCode' , 'P2');
 mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} ,'/'];
 
 save([mainDir , 'AllData_Behav.mat'] , 'Dall')
@@ -11,13 +11,21 @@ out  = secog_visualize(Dall , subjNum, 'IPI_MT_seq', [], [] , [] , [1 2], [1]);
 out  = secog_visualize(Dall , subjNum, 'IPI_MT_chunk', [], [] , [] , [1 2], [1]);
 
 %% Pack EEG
-secog_packEEG('PackEEG' , 2);
+secog_packEEG('PackEEG' , 1);
 %% Calculate the PSDs
-subjNum = 2;
-load('AllData_Behav.mat')
+subjNum = 1;
+
+% Good Channels for P2
 chans = [3:15 , 99:109 , 121:129 ,36];
+
+% Good Channels for P4
+% chans = [15:23 25 80:88 90:99 101:110 112 28];
+
+
+load('AllData_Behav.mat')
+
 load('AllData_Events.mat')
-Dout  = secog_parseEEG_PSD('ParseEEG-freqDecomp' , Dall, subjNum); ... , 'Channels' , chans);
+Dout  = secog_parseEEG_PSD('ParseEEG-freqDecomp' , Dall, subjNum);% , 'Channels' , chans);
 Dout  = secog_parseEEG_PSD('ParseEEG-calc_norm_PSD' , Dall, subjNum , 'Channels' , chans);
 % time warp
 Dout  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned' , Events, subjNum);

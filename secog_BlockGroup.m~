@@ -510,7 +510,7 @@ switch what
             Dall.seqNumb(id) = SeqTrans(2 , sn);
         end
         
-        for BG = 1:length(blockGroups)
+        for BG = 12:length(blockGroups)
             P = [];
             saveName = [mainDir,'Group_Aligned_PSD',num2str(BG) , '.mat'];
             E1 = getrow(E , BG);
@@ -518,8 +518,7 @@ switch what
                 BN = blockGroups{BG}(bn);
                 filename = [mainDir ,  'EventAligned_PSD_B' , num2str(BN),'.mat'];
                 Pall = getrow(Dall , Dall.BN == BN);
-                
-                if length(E1.SN{1})>0 
+                if length(E1.SN{1})>0
                     for tn = 1:length(Pall.TN)
                         trialName = ['PSD_Aligned',num2str(tn)];
                         A = load(filename , trialName);
@@ -541,9 +540,8 @@ switch what
                     
                 end
                 [BG bn]
-                if size(Pall.PSD , 2)>1
-                    P = addstruct(P,Pall);
-                end
+                if size(P)
+                P = addstruct(P,Pall);
             end
             
             %% bin the PSDs and pad them with nans
@@ -562,18 +560,18 @@ switch what
             id  = Dall.seqNumb == SeqTrans(1 , sn);
             Dall.seqNumb(id) = SeqTrans(2 , sn);
         end
-
-         for BG = 1:11%:length(blockGroups)
-            P = [];
+        
+        for BG = 1:length(blockGroups)
             saveName = [mainDir,'Group_WarpedAligned_PSD',num2str(BG) , '.mat'];
             E1 = getrow(E , BG);
+            P = [];
             for bn = 1:length(blockGroups{BG})
                 BN = blockGroups{BG}(bn);
                 filename = [mainDir ,  'EventAligned_WarpedPSD_B' , num2str(BN),'.mat'];
                 Pall = getrow(Dall , Dall.BN == BN);
-                
-                if length(E1.SN{1})>0 
+                if length(E1.SN{1})>0
                     for tn = 1:length(Pall.TN)
+                        tn
                         trialName = ['PSD_Aligned',num2str(tn)];
                         A = load(filename , trialName);
                         tempPSD = eval(['A.',trialName,';']);
@@ -593,18 +591,14 @@ switch what
                     Pall.PSD = [];
                     
                 end
-                [BG bn]
-                if size(Pall.PSD , 2)>1
-                    P = addstruct(P,Pall);
-                end
+                P = addstruct(P,Pall);
             end
-            
             %% bin the PSDs and pad them with nans
             
             Pall = P;
             save(saveName , 'Pall');
             clear P Pall
-        end        
+        end
         
 end
 

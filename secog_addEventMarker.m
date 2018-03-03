@@ -2,7 +2,7 @@ function Dout  = secog_addEventMarker(Dall, subjNum, Fs , what,varargin)
 % adds event markers for the EEG / PSD data pased on press times and the sampling frequency
 % make sure to account for downsampling in Fs
 
-subjname = {'P2'};
+subjname = {'P2' , 'P4'};
 mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} ,'/'];
 load([mainDir , 'ChanLabels.mat'])
 c= 1;
@@ -35,33 +35,35 @@ BG(1).blockGroups =  {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:
 BG(2).blockGroups = {[ ] , [2 8], [14 20 26], [29 38], [], [1 7],[13 19 25], [28 37], [] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
     [18 24] , [30:32] , [34:36] , [], [27 33],[]}';
 
-Dout.blockGroupNames = BG(subjNum).blockGroups;
+Dout.blockGroups = BG(subjNum).blockGroups;
 Dout.blockGroupNames = {'SingleFingNat' , 'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4',...
     'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' , 'Intermixed1' , 'Intermixed2' , ...
     'ChunkDay1' , 'Intermixed3' , 'Intermixed4' , 'Intermixed5', 'ChunkDay2' , 'Intermixed6' , ...
     'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9'}';
-
 Dall.Fast = zeros(size(Dall.TN));
 fastBlock = horzcat(Dout.blockGroups{1} ,Dout.blockGroups{6} , Dout.blockGroups{7},Dout.blockGroups{8},Dout.blockGroups{9},...
     Dout.blockGroups{12},Dout.blockGroups{16},Dout.blockGroups{20});
 Dall.Fast(ismember(Dall.BN , fastBlock)) = 1;
 %%  control for too short IPIs that the keys get accidentally pressed
-for i = 1:length(Dall.TN)
-    if sum(Dall.IPI(i,:)<120)
-        Dall.isError(i) =1;
+if subjNum==1
+    for i = 1:length(Dall.TN)
+        if sum(Dall.IPI(i,:)<120)
+            Dall.isError(i) =1;
+        end
     end
 end
-
+% the length of the Null trials was diferent for P2 and P4
+NullTrailTime = [15 7]; % sec
+Dall.seqlength(Dall.seqNumb == 5) = 0;
 switch what
     case 'addEvent'
         %% find the non-normal and normal event marker and averages
         % can be performed on individual blocks or trails
         
         for i = 1:length(Dall.TN)
-
-            if ~Dall.isError(i)
+            if ~Dall.isError(i) && sum(~isnan(Dall.AllPressTimes(i,:))) == Dall.seqlength(i)
                 if ismember(Dall.TN(i) , [1,2])
-                    eegTime = floor((15+3*TimeDelay)*Fs);
+                    eegTime = floor((NullTrailTime(subjNum)+3*TimeDelay)*Fs);
                 else
                     eegTime = floor((.001*(Dall.AllPressTimes(i , Dall.seqlength(i)))+3*TimeDelay)*Fs);
                 end
@@ -115,40 +117,48 @@ switch what
             D1 = getrow(Dall , ~Dall.isError & ismember(Dall.BN , Dout.blockGroups{BG}));
             Dout.SN{BG,1} = unique(D1.seqNumb);
             Dout.SN{BG,1} = Dout.SN{BG,1};
-            for sn= 1:length(Dout.SN{BG,1})
-                clear EventMarker NormEventMarker EM NEM diffNEM
-                EventMarker = [];
-                NormEventMarker = [];
-                D = getrow(D1 , ismember(D1.seqNumb , Dout.SN{BG,1}(sn)) & ~D1.isError & ismember(D1.BN , Dout.blockGroups{BG,1}));
-                D.seqlength(isnan(D.seqlength)) = 1;
-                SL = unique(D.seqlength);
-                Dout.EM{BG,1}(sn , :)= nan(1,max(Dall.seqlength)+1);
-                Dout.NEM{BG,1}(sn , :)= nan(1,max(Dall.seqlength)+1);
-                if ~isempty(D.TN)
-                    for k = 1:length(D.TN)
-                        temp = nan(1,max(Dall.seqlength)+1);
-                        Ntemp = nan(1,max(Dall.seqlength)+1);
-                        events = [-1 , 1:D.seqlength(k)];
-                        clear temp Ntemp
-                        for jj = 1:length(events)
-                            if  ~isempty(find(D.EventMarker{k} == events(jj)))
-                                temp(1, jj) =  find(D.EventMarker{k} == events(jj));
-                            else
-                                temp(1, jj) = NaN;
+            if length(Dout.SN{BG,1})>0
+                for sn= 1:length(Dout.SN{BG,1})
+                    clear EventMarker NormEventMarker EM NEM diffNEM
+                    EventMarker = [];
+                    NormEventMarker = [];
+                    D = getrow(D1 , ismember(D1.seqNumb , Dout.SN{BG,1}(sn)) & ~D1.isError & ismember(D1.BN , Dout.blockGroups{BG,1}));
+                    D.seqlength(isnan(D.seqlength)) = 1;
+                    SL = unique(D.seqlength);
+                    Dout.EM{BG,1}(sn , :)= nan(1,max(Dall.seqlength)+1);
+                    Dout.NEM{BG,1}(sn , :)= nan(1,max(Dall.seqlength)+1);
+                    if ~isempty(D.TN)
+                        for k = 1:length(D.TN)
+                            temp = nan(1,max(Dall.seqlength)+1);
+                            Ntemp = nan(1,max(Dall.seqlength)+1);
+                            events = [-1 , 1:D.seqlength(k)];
+                            clear temp Ntemp
+                            for jj = 1:length(events)
+                                if  ~isempty(find(D.EventMarker{k} == events(jj)))
+                                    temp(1, jj) =  find(D.EventMarker{k} == events(jj));
+                                else
+                                    temp(1, jj) = NaN;
+                                end
+                                if ~isempty(find(D.NormEventMarker{k} == events(jj)))
+                                    Ntemp(1,jj) =  find(D.NormEventMarker{k} == events(jj));
+                                else
+                                    Ntemp(1,jj) = NaN;
+                                end
                             end
-                            if ~isempty(find(D.NormEventMarker{k} == events(jj)))
-                                Ntemp(1,jj) =  find(D.NormEventMarker{k} == events(jj));
-                            else
-                                Ntemp(1,jj) = NaN;
-                            end
+                            EventMarker = [EventMarker; temp];
+                            NormEventMarker = [NormEventMarker ;Ntemp];
                         end
-                        EventMarker = [EventMarker; temp];
-                        NormEventMarker = [NormEventMarker ;Ntemp];
                     end
+                    Dout.EM{BG,1}(sn , 1:SL+1) = floor(nanmean(EventMarker));
+                    Dout.NEM{BG,1}(sn ,1:SL+1) = floor(nanmin(NormEventMarker));
+                    
                 end
-                Dout.EM{BG,1}(sn , 1:SL+1) = floor(nanmean(EventMarker));
-                Dout.NEM{BG,1}(sn ,1:SL+1) = floor(nanmin(NormEventMarker));
+            else
+                Dout.EM{BG,1} = [];
+                Dout.NEM{BG,1} = [];
+                Dout.SN{BG,1} = [];
             end
+            
         end
         
     case 'CalcAveragePattern_seqType'
@@ -179,40 +189,46 @@ switch what
             D1 = getrow(Dall , ~Dall.isError & ismember(Dall.BN , Dout.blockGroups{BG}));
             Dout.SN{BG,1} = unique(D1.seqNumb);
             Dout.SN{BG,1} = Dout.SN{BG,1};
-            for sn= 1:length(Dout.SN{BG,1})
-                [BG sn]
-                clear EventMarker NormEventMarker EM NEM diffNEM
-                EventMarker = [];
-                NormEventMarker = [];
-                D = getrow(D1 , ismember(D1.seqNumb , Dout.SN{BG,1}(sn)) & ~D1.isError & ismember(D1.BN , Dout.blockGroups{BG,1}));
-                D.seqlength(isnan(D.seqlength)) = 1;
-                SL = unique(D.seqlength);
-                Dout.EM{BG,1}(sn , :)= nan(1,max(Dall.seqlength)+1);
-                Dout.NEM{BG,1}(sn , :)= nan(1,max(Dall.seqlength)+1);
-                if ~isempty(D.TN)
-                    for k = 1:length(D.TN)
-                        temp = nan(1,max(Dall.seqlength)+1);
-                        Ntemp = nan(1,max(Dall.seqlength)+1);
-                        events = [-1 , 1:D.seqlength(k)];
-                        clear temp Ntemp
-                        for jj = 1:length(events)
-                            if  ~isempty(find(D.EventMarker{k} == events(jj)))
-                                temp(1, jj) =  find(D.EventMarker{k} == events(jj));
-                            else
-                                temp(1, jj) = NaN;
+            if length(Dout.SN{BG,1})>1
+                for sn= 1:length(Dout.SN{BG,1})
+                    clear EventMarker NormEventMarker EM NEM diffNEM
+                    EventMarker = [];
+                    NormEventMarker = [];
+                    D = getrow(D1 , ismember(D1.seqNumb , Dout.SN{BG,1}(sn)) & ~D1.isError & ismember(D1.BN , Dout.blockGroups{BG,1}));
+                    D.seqlength(isnan(D.seqlength)) = 1;
+                    SL = unique(D.seqlength);
+                    Dout.EM{BG,1}(sn , :)= nan(1,max(Dall.seqlength)+1);
+                    Dout.NEM{BG,1}(sn , :)= nan(1,max(Dall.seqlength)+1);
+                    if ~isempty(D.TN)
+                        for k = 1:length(D.TN)
+                            temp = nan(1,max(Dall.seqlength)+1);
+                            Ntemp = nan(1,max(Dall.seqlength)+1);
+                            events = [-1 , 1:D.seqlength(k)];
+                            clear temp Ntemp
+                            for jj = 1:length(events)
+                                if  ~isempty(find(D.EventMarker{k} == events(jj)))
+                                    temp(1, jj) =  find(D.EventMarker{k} == events(jj));
+                                else
+                                    temp(1, jj) = NaN;
+                                end
+                                if ~isempty(find(D.NormEventMarker{k} == events(jj)))
+                                    Ntemp(1,jj) =  find(D.NormEventMarker{k} == events(jj));
+                                else
+                                    Ntemp(1,jj) = NaN;
+                                end
                             end
-                            if ~isempty(find(D.NormEventMarker{k} == events(jj)))
-                                Ntemp(1,jj) =  find(D.NormEventMarker{k} == events(jj));
-                            else
-                                Ntemp(1,jj) = NaN;
-                            end
+                            EventMarker = [EventMarker; temp];
+                            NormEventMarker = [NormEventMarker ;Ntemp];
                         end
-                        EventMarker = [EventMarker; temp];
-                        NormEventMarker = [NormEventMarker ;Ntemp];
                     end
+                    Dout.EM{BG,1}(sn , 1:SL+1) = floor(nanmean(EventMarker));
+                    Dout.NEM{BG,1}(sn ,1:SL+1) = floor(nanmin(NormEventMarker));
+                    
                 end
-                Dout.EM{BG,1}(sn , 1:SL+1) = floor(nanmean(EventMarker));
-                Dout.NEM{BG,1}(sn ,1:SL+1) = floor(nanmin(NormEventMarker));
+            else
+                Dout.EM{BG,1} = [];
+                Dout.NEM{BG,1} = [];
+                Dout.SN{BG,1} = [];
             end
         end
 end

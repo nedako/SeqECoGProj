@@ -14,13 +14,14 @@ function secog_visualizePSD(Pall , subjNum, what,varargin)
 %      'raw_BlockGroup_AvgChann'
 
 %% set defaults and deal with varargin
+subjname = {'P2' , 'P4'};
+mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} ,'/'];
 NumWarpSampFast = 200;
 NumWarpSampSlow = 500;
 DownsampleRate = 10;
 FreqRange = [2 180];
 numFreqBins = 90;
-subjname = {'P2' , 'P4'};
-load([saveDir , 'ChanLabels.mat']);
+load([mainDir , 'ChanLabels.mat']);
 Channels = length(ChanLabels);
 
 c = 1;
@@ -176,8 +177,9 @@ switch what
         for ch = 1:length(Chan2Plot)
             subplot(length(Chan2Plot),1, ch)
             B = real(squeeze(D.Pow_Norm_stim(Chan2Plot(ch),:,:)));
-            %             contourf(time,frex,B,60,'linecolor','none')
-            imagesc(time,frex,B)
+            contourf(time,frex,B,60,'linecolor','none')
+            colorbar
+%             imagesc(time,frex,B)
             % caxis([-15 7])
             title (['Raw PSD for ',num2str(D.AllPress(1,:)) ', in Channel ' , ChanLabels{Chan2Plot(ch)}])
             for lin = 1:length(EM)
@@ -549,9 +551,9 @@ switch what
         for n = 1:length(BlockGroup)
             bgid = find(strcmp(blockGroupNames , BlockGroup{n}));
  
-            BG(n) = find(strcmp(blockGroupNames , BlockGroup{n}));
+            BlG(n) = find(strcmp(blockGroupNames , BlockGroup{n}));
         
-            filename = [mainDir ,  'PowerSpectrum_SeqType' , num2str(BG(n)),'.mat'];
+            filename = [mainDir ,  'PowerSpectrum_SeqType' , num2str(BlG(n)),'.mat'];
             load(filename)
             chanGroup = {Chan2Plot};
             fig = figure;
@@ -584,7 +586,7 @@ switch what
             text(80 ,5 , 'High Gamma' , 'FontSize' , 30)
             for n = 1:length(BlockGroup)
                 [n sn]
-                snid = find(sequenceType.nums == E.SN{BG(n)}(sn));
+                snid = find(sequenceType.nums == E.SN{BlG(n)}(sn));
                 bgid = find(strcmp(blockGroupNames , BlockGroup{n}));
                 legen = [legen , blockGroupTags{bgid}];
                 h(n).fig = plotshade(x{cg,n}{sn}' , p{cg,n}{sn} , e{cg,n}{sn},'transp' , .2 , 'patchcolor' , colorz{n} , 'linecolor' , colorz{n} , 'linewidth' , 3 , 'linestyle' , ':');
@@ -593,8 +595,8 @@ switch what
                 %                 grid on
             end
             legend(leg , legen , 'Box' , 'off')
-%             title(['Percent Change in Power from Baseline in ' , sequenceType.tags{snid} ])
-            set(gca , 'YLim',[-4 6.5] , 'FontSize' , 34 , 'Box' , 'off' , 'YTick' , [-4 0 4]);
+            title(['Percent Change in Power from Baseline in ' , sequenceType.tags{snid} ])
+            set(gca , 'YLim',[-8 8] , 'FontSize' , 16 , 'Box' , 'off' , 'YTick' , [-4 0 4]);
             ylabel('(%)')
             xlabel('Frequency (Hz)')
             fCont = fCont +1;
@@ -757,12 +759,12 @@ switch what
         for bg = 1:length(BlockGroup)
             load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
            
-            BG(bg) = find(strcmp(blockGroupNames , BlockGroup{bg}));
-            E = getrow(E , BG(bg));
+            BlG(bg) = find(strcmp(blockGroupNames , BlockGroup{bg}));
+            E = getrow(E , BlG(bg));
             if isempty(E.EM)
                 error('Nothing to plot!')
             end
-            filename = [mainDir ,  'Group_Aligned_PSD' , num2str(BG(bg)),'.mat'];
+            filename = [mainDir ,  'Group_Aligned_PSD' , num2str(BlG(bg)),'.mat'];
             load(filename);
             Pall = getrow(Pall , Pall.seqNumb ~= 100 & ~Pall.isError);
             SN = unique(Pall.seqNumb);
@@ -774,8 +776,12 @@ switch what
                 % reduce the band and channel dimensions
                 for evnt = 1:T.seqlength(1)+1
                     for tn = 1:length(T.TN)
-                        temp = squeeze(T.PSD{tn , evnt}(:,bandofInterest,:));
-                        T.reducPSD{tn , evnt} = nanmean(temp(Chan2Plot , :) , 1);
+                        if~isempty(T.PSD{tn , evnt})
+                            temp = squeeze(T.PSD{tn , evnt}(:,bandofInterest,:));
+                            T.reducPSD{tn , evnt} = nanmean(temp(Chan2Plot , :) , 1);
+                        else
+                            T.reducPSD{tn , evnt} = nan(1, 5);
+                        end
                     end
                 end
                 T.blockgroup = bg*ones(size(T.BN));
@@ -901,13 +907,13 @@ switch what
         end
         for bg = 1:length(BlockGroup)
             load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
-           
-            BG(bg) = find(strcmp(blockGroupNames , BlockGroup{bg}));
-            E = getrow(E , BG(bg));
+          
+            BlG(bg) = find(strcmp(blockGroupNames , BlockGroup{bg}));
+            E = getrow(E , BlG(bg));
             if isempty(E.EM)
                 error('Nothing to plot!')
             end
-            filename = [mainDir ,  'Group_WarpedAligned_PSD' , num2str(BG(bg)),'.mat'];
+            filename = [mainDir ,  'Group_WarpedAligned_PSD' , num2str(BlG(bg)),'.mat'];
             load(filename);
             for i = 1:length(Pall.TN)
                 if sum(Pall.IPI(i,:)<120)
@@ -924,9 +930,13 @@ switch what
                 % reduce the band and channel dimensions
                 for evnt = 1:T.seqlength(1)+1
                     for tn = 1:length(T.TN)
-                        [sn evnt tn]
-                        temp = squeeze(T.PSD{tn , evnt}(:,bandofInterest,:));
-                        T.reducPSD{tn , evnt} = nanmean(temp(Chan2Plot , :) , 1);
+                        [bg sn evnt tn]
+                        if~isempty(T.PSD{tn , evnt})
+                            temp = squeeze(T.PSD{tn , evnt}(:,bandofInterest,:));
+                            T.reducPSD{tn , evnt} = nanmean(temp(Chan2Plot , :) , 1);
+                        else
+                            T.reducPSD{tn , evnt} = nan(1, 5);
+                        end
                     end
                 end
                 T.blockgroup = bg*ones(size(T.BN));
@@ -1050,12 +1060,12 @@ switch what
         for bg = 1:length(BlockGroup)
             load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
             
-            BG(bg) = find(strcmp(blockGroupNames , BlockGroup{bg}));
-            E = getrow(E , BG(bg));
+            BlG(bg) = find(strcmp(blockGroupNames , BlockGroup{bg}));
+            E = getrow(E , BlG(bg));
             if isempty(E.EM)
                 error('Nothing to plot!')
             end
-            filename = [mainDir ,  'Group_Aligned_PSD' , num2str(BG(bg)),'.mat'];
+            filename = [mainDir ,  'Group_Aligned_PSD' , num2str(BlG(bg)),'.mat'];
             load(filename);
             Pall = getrow(Pall , Pall.seqNumb ~= 100 & ~Pall.isError);
             SN = unique(Pall.seqNumb);

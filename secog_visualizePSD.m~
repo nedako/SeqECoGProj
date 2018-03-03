@@ -14,13 +14,15 @@ function secog_visualizePSD(Pall , subjNum, what,varargin)
 %      'raw_BlockGroup_AvgChann'
 
 %% set defaults and deal with varargin
+subjname = {'P2' , 'P4'};
+mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} ,'/'];
 NumWarpSampFast = 200;
 NumWarpSampSlow = 500;
 DownsampleRate = 10;
 FreqRange = [2 180];
 numFreqBins = 90;
-Channels = 129;
-subjname = {'P2'};
+load([mainDir , 'ChanLabels.mat']);
+Channels = length(ChanLabels);
 
 c = 1;
 while(c<=length(varargin))
@@ -98,8 +100,17 @@ load([mainDir , 'AllData_Events.mat'])
 load([mainDir , 'AllData_AvgMarker.mat'])
 
 %% HouseKeeping
-blockGroups = {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:7] , [9:11] , [8 12] , [15:17] , [19:21] , [23:25],...
+
+% block groupings for subject 1
+BG(1).blockGroups =  {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:7] , [9:11] , [8 12] , [15:17] , [19:21] , [23:25],...
     [18 22] , [28:30] , [32:34] , [36:38], [31 35 39],[42:44]}';
+% block groupings for subject 2
+BG(2).blockGroups = {[ ] , [2 8], [14 20 26], [29 38], [], [1 7],[13 19 25], [28 37], [] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
+    [18 24] , [30:32] , [34:36] , [], [27 33],[]}';
+
+% define block types
+blockGroups = BG(subjNum).blockGroups;
+
 blockGroupNames = {'SingleFingNat' , 'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4',...
     'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' , 'Intermixed1' , 'Intermixed2' , ...
     'ChunkDay1' , 'Intermixed3' , 'Intermixed4' , 'Intermixed5', 'ChunkDay2' , 'Intermixed6' , ...
@@ -166,8 +177,9 @@ switch what
         for ch = 1:length(Chan2Plot)
             subplot(length(Chan2Plot),1, ch)
             B = real(squeeze(D.Pow_Norm_stim(Chan2Plot(ch),:,:)));
-            %             contourf(time,frex,B,60,'linecolor','none')
-            imagesc(time,frex,B)
+            contourf(time,frex,B,60,'linecolor','none')
+            colorbar
+%             imagesc(time,frex,B)
             % caxis([-15 7])
             title (['Raw PSD for ',num2str(D.AllPress(1,:)) ', in Channel ' , ChanLabels{Chan2Plot(ch)}])
             for lin = 1:length(EM)
@@ -539,9 +551,9 @@ switch what
         for n = 1:length(BlockGroup)
             bgid = find(strcmp(blockGroupNames , BlockGroup{n}));
  
-            BG(n) = find(strcmp(blockGroupNames , BlockGroup{n}));
+            BlG(n) = find(strcmp(blockGroupNames , BlockGroup{n}));
         
-            filename = [mainDir ,  'PowerSpectrum_SeqType' , num2str(BG(n)),'.mat'];
+            filename = [mainDir ,  'PowerSpectrum_SeqType' , num2str(BlG(n)),'.mat'];
             load(filename)
             chanGroup = {Chan2Plot};
             fig = figure;
@@ -574,7 +586,7 @@ switch what
             text(80 ,5 , 'High Gamma' , 'FontSize' , 30)
             for n = 1:length(BlockGroup)
                 [n sn]
-                snid = find(sequenceType.nums == E.SN{BG(n)}(sn));
+                snid = find(sequenceType.nums == E.SN{BlG(n)}(sn));
                 bgid = find(strcmp(blockGroupNames , BlockGroup{n}));
                 legen = [legen , blockGroupTags{bgid}];
                 h(n).fig = plotshade(x{cg,n}{sn}' , p{cg,n}{sn} , e{cg,n}{sn},'transp' , .2 , 'patchcolor' , colorz{n} , 'linecolor' , colorz{n} , 'linewidth' , 3 , 'linestyle' , ':');
@@ -1077,7 +1089,7 @@ switch what
             end
         end
         titleLab = {'Chunk Boundry Press'};
-        titleLab = [titleLab  , repmat({'Before Chunk Boundry' , 'After Chunk Boundry'} , 1 , length(chnkInd)-1)];
+        titleLab = [titleLab  , repmat({'Before Chunk Boundry' , 'After Chunk Boundry'} , 1 , .5*(length(chnkInd)-1))];
         for evnt = 1:size(D.chunkArrPSD , 2)
             medEventLen = floor(median(cellfun(@length, D.chunkArrPSD(:,evnt))));
             maxLen = max(cellfun(@length, D.chunkArrPSD(:,evnt)));

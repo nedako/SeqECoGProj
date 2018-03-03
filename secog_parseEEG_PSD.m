@@ -137,7 +137,7 @@ switch what
         
         %%
         Events = [];
-        for i = 11:size(BlockInfo , 1)
+        for i = 1:size(BlockInfo , 1)
             clear Pall
             
             D = getrow(Dall , Dall.BN == i);
@@ -167,6 +167,7 @@ switch what
                 % better define it this way for trials with presses
                 end_tr = find(marker == -1);  % ends of trials
                 for tn = 3:length(start_tr)
+                    tn
                     if ~isnan(D.AllPressTimes(tn , D.seqlength(tn)))
                         end_tr(tn) = start_tr(tn) + Fs*(D.AllPressTimes(tn , D.seqlength(tn))/1000)';
                     end
@@ -262,6 +263,8 @@ switch what
         wo = Fo/(Fs/2);  bw = wo/35; % notch to eliminate 60 Hz
         [b,a] = iirnotch(wo,bw);
         Dall  = secog_addEventMarker(Dall, subjNum, Fs_ds , 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
+        Events = Dall;
+        save([saveDir , 'AllData_Events.mat'] , 'Events');
         wo = 2*Fo/(Fs/2);  bw = wo/60;% notch to eliminate the first harmonic
         [c,d] = iirnotch(wo,bw);
         % definitions, selections...
@@ -286,51 +289,58 @@ switch what
             end
             %     extract the data for the block at hand
             BlockRang = [BlockInfo{i,2} : BlockInfo{i,3}];
-            Beeg = getrow(Data , Channels);
-            Beeg.values = Beeg.values(:,BlockRang);
-            % get the indecies for starts ans ends of the trials
-            marker = Beeg.values(find(strcmp(Beeg.label , 'TTL')) , :);
-            marker = [0 diff(marker <-2*10^6)];
-            for ch = 1:size(Beeg.values , 1)
-                B = Beeg.values(ch , :);
-                A = filter(b,a , B);
-                Beeg.values(ch , :) = A;
-            end
-            start_tr = find(marker == 1); % starts of trials
-            % right now the end TTl pulse is being sent by the releas eof
-            % the last finger, so is not aligned to the last press time. so
-            % better define it this way for trials with presses
-            end_tr = find(marker == -1);  % ends of trials
-            for tn = 3:length(start_tr)
-                if ~isnan(D.AllPressTimes(tn , D.seqlength(tn)))
-                    end_tr(tn) = start_tr(tn) + Fs*(D.AllPressTimes(tn , D.seqlength(tn))/1000)';
+            if ~ismember(BlockRang , -1)
+                Beeg = getrow(Data , Channels);
+                Beeg.values = Beeg.values(:,BlockRang);
+                % get the indecies for starts ans ends of the trials
+                marker = Beeg.values(find(strcmp(Beeg.label , 'TTL')) , :);
+                marker = [0 diff(marker <-2*10^6)];
+                for ch = 1:size(Beeg.values , 1)
+                    B = Beeg.values(ch , :);
+                    A = filter(b,a , B);
+                    Beeg.values(ch , :) = A;
                 end
-            end
-            start_tr = floor(start_tr / DownsampleRate);
-            end_tr = floor(end_tr / DownsampleRate);
-            for ch = 1:size(Beeg.values , 1)
-                Chname{ch} = ['RawEEGpower',num2str(ch)];
-                [REG, BandInfo] = secog_waveletPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate);
-                REG = 10*log10(abs(REG).^2);
-                % normalize each trial to baseline : TimeDelay ms before the stim  onset
-                for tr = 1:length(start_tr)
-                    baseline = nanmean(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay):start_tr(tr)) , 2);
-                    X = REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay) : end_tr(tr)+floor(Fs_ds*2*TimeDelay));
-                    X = (X - repmat(baseline , 1,size(X,2)))./repmat(baseline , 1,size(X,2));
-                    eval(['D.PSD{tr,1}(ch , :,:)  = X;']);
+                start_tr = find(marker == 1); % starts of trials
+                % right now the end TTl pulse is being sent by the releas eof
+                % the last finger, so is not aligned to the last press time. so
+                % better define it this way for trials with presses
+                end_tr = find(marker == -1);  % ends of trials
+                for tn = 3:length(start_tr)
+                    if ~isnan(D.AllPressTimes(tn , D.seqlength(tn)))
+                        end_tr(tn) = start_tr(tn) + Fs*(D.AllPressTimes(tn , D.seqlength(tn))/1000)';
+                    end
                 end
-                disp(['PSD calculation for block ' , num2str(i) , ', channel ' , num2str(ch) , ' completed'])
-                clear REG
-            end
-            % in case some trials at the end didnt get recorded on the marker
-            if length(start_tr)<length(D.TN)
-                missing = abs(length(start_tr)-length(D.TN));
+                start_tr = floor(start_tr / DownsampleRate);
+                end_tr = floor(end_tr / DownsampleRate);
+                for ch = 1:size(Beeg.values , 1)
+                    Chname{ch} = ['RawEEGpower',num2str(ch)];
+                    [REG, BandInfo] = secog_waveletPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate);
+                    REG = 10*log10(abs(REG).^2);
+                    % normalize each trial to baseline : TimeDelay ms before the stim  onset
+                    for tr = 1:length(start_tr)
+                        baseline = nanmean(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay):start_tr(tr)) , 2);
+                        X = REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay) : end_tr(tr)+floor(Fs_ds*2*TimeDelay));
+                        X = (X - repmat(baseline , 1,size(X,2)))./repmat(baseline , 1,size(X,2));
+                        eval(['D.PSD{tr,1}(ch , :,:)  = X;']);
+                    end
+                    disp(['PSD calculation for block ' , num2str(i) , ', channel ' , num2str(ch) , ' completed'])
+                    clear REG
+                end
+                % in case some trials at the end didnt get recorded on the marker
+                if length(start_tr)<length(D.TN)
+                    missing = abs(length(start_tr)-length(D.TN));
+                    missingTR = [length(D.TN)-(missing-1) : length(D.TN)];
+                    for mtr = missingTR
+                        eval(['D.PSD{mtr,1}  = NaN;']);
+                    end
+                end
+            else
+                missing = length(D.TN);
                 missingTR = [length(D.TN)-(missing-1) : length(D.TN)];
                 for mtr = missingTR
                     eval(['D.PSD{mtr,1}  = NaN;']);
                 end
             end
-            
             
             %% find the event markers and normalize the power to TimeDelay ms before the stimulus came on - or press
             % complete the structure with behavior again
@@ -340,19 +350,24 @@ switch what
 
             %% save the unbinned data in separate blocks for managability in size
             %             save the raw unbinned psd
-            for tn = 1 :length(start_tr)
+            for tn = 1 :length(D.TN)
                 % prepare the individual trials to be saved as the
                 % fileds of a structre to make loading easier
                 eval(['Pall.PSD',num2str(tn),' = D.Pow_Norm_stim{', num2str(tn), '};']);
             end
+            
             saveName = [saveDir,'Raw_PSD_B',num2str(i) ,'.mat'];
             save(saveName,'-struct','Pall', '-v7.3');
             
             % then band-average and stack up
-            for tn = 1 :length(start_tr)
-                temp = D.Pow_Norm_stim{tn};
-                for b =1:length(BandInfo.bandid)
-                    P.Pow_Norm_stim{tn,1}(:,b, :) =  nanmean(temp(:,BandInfo.bandid{b}(1) : BandInfo.bandid{b}(2),:) , 2);
+            for tn = 1 :length(D.TN)
+                if ~isnan(D.Pow_Norm_stim{tn})
+                    temp = D.Pow_Norm_stim{tn};
+                    for b =1:length(BandInfo.bandid)
+                        P.Pow_Norm_stim{tn,1}(:,b, :) =  nanmean(temp(:,BandInfo.bandid{b}(1) : BandInfo.bandid{b}(2),:) , 2);
+                    end
+                else
+                    P.Pow_Norm_stim{tn,1} = NaN;
                 end
             end
             Dout = addstruct(Dout , P);
@@ -364,7 +379,7 @@ switch what
         clear Dall
         saveName = [saveDir,'AllData_PSD_StimNorm.mat'];
         save(saveName , 'Pall' , '-v7.3');
-
+        
     case 'TimeWarpPSD_Raw_Binned'
         % this case loads up it's own input so the Dall structure can be left blac
         load([saveDir,'AllData_Events.mat']);
@@ -403,11 +418,12 @@ switch what
             nPSD = D.Pow_Norm_stim;
             
             % set the sequence length for "*******" trilas to one
-            D.seqlength(isnan(D.seqlength)) = 1;
+            D.seqlength(D.seqNumb==5) = 1;
             D.NumWarpSamp = NumWarpSampSlow* ones(size(D.TN));
             D.NumWarpSamp(logical(D.Fast)) = NumWarpSampFast;
             for tn = 1:length(D.TN)
-                if length(find(D.NormEventMarker{tn})) == D.seqlength(tn) +1 & ~D.isError(tn) & length(D.EventMarker{tn})>D.NumWarpSamp(tn)
+                if length(find(D.NormEventMarker{tn})) == D.seqlength(tn) +1 & ~D.isError(tn) & ...
+                        length(D.EventMarker{tn})>D.NumWarpSamp(tn) & ~isnan(nPSD{tn})
                     % check which block group this block falls into
                     
                     A = nPSD{tn};
@@ -468,6 +484,7 @@ switch what
         saveName = [saveDir,'AllData_PSD_Warped.mat'];
         save(saveName,'Pall', '-v7.3');
         Dout = Pall;
+
     case 'TimeWarpPSD_Raw_Binned_seqType'
         % this case loads up it's own input so the Dall structure can be left blac
         %% the goal here is to get average time pattern for general sequence types regardless of finger
@@ -484,6 +501,7 @@ switch what
         % find average event markers
         Events  = secog_addEventMarker(Dall,subjNum, Fs_ds, 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
         E  = secog_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern_seqType' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
+        save([saveDir , 'AllData_AvgMarker_SeqType.mat'] , 'E');
         
         % Define sequence numbers and their transformations:
         SeqTrans = [5 11 22 33 44 55 0 1 2 3 4 103 104 203 204;...
@@ -520,11 +538,12 @@ switch what
              nPSD = D.Pow_Norm_stim;
             
             % set the sequence length for "*******" trilas to one
-            D.seqlength(isnan(D.seqlength)) = 1;
+            D.seqlength(D.seqNumb==100) = 1;
             D.NumWarpSamp = NumWarpSampSlow* ones(size(D.TN));
             D.NumWarpSamp(logical(D.Fast)) = NumWarpSampFast;
             for tn = 1:length(D.TN)
-                if length(find(D.NormEventMarker{tn})) == D.seqlength(tn) +1 & ~D.isError(tn) & length(D.EventMarker{tn})>D.NumWarpSamp(tn)
+                if length(find(D.NormEventMarker{tn})) == D.seqlength(tn) +1 & ~D.isError(tn) & ...
+                        length(D.EventMarker{tn})>D.NumWarpSamp(tn) & ~isnan(nPSD{tn})
                     % check which block group this block falls into
                     
                     A = nPSD{tn};
@@ -596,7 +615,7 @@ switch what
         BN = unique(Events.BN);
         
         Pall_binned = [];
-        for bn = 2:length(BN)
+        for bn = 1:length(BN)
             bg = 1;
             mem = 0;
             while mem == 0
@@ -613,7 +632,7 @@ switch what
 
         
             % set the sequence length for "*******" trilas to one
-            D.seqlength(isnan(D.seqlength)) = 1;
+            D.seqlength(D.seqNumb==100) = 1;
             D.NumWarpSamp = NumWarpSampSlow* ones(size(D.TN));
             D.NumWarpSamp(logical(D.Fast)) = NumWarpSampFast;
             numEvents = max(D.seqlength) + 1;
@@ -633,7 +652,7 @@ switch what
                 AvgPowBL = squeeze(mean(tempbl  , 3));
                 tempaf = eval(['10*log10(abs(A.',trialName,'.decompAftTR).^2);']);
                 AvgPowAF = squeeze(mean(tempaf  , 3));
-                if  ~D.isError(tn)
+                if  ~D.isError(tn) & sum(sum(~isnan(D.EventMarker{tn}))) & sum(sum(~isnan(AvgPowTR)))
                     % check which block group this block falls into
                     tempAll = cat(3 , tempbl , temptr , tempaf);
                     A  = tempAll  - repmat(AvgPowBL , 1,1,size(tempAll , 3));
@@ -681,7 +700,7 @@ switch what
        
         
         Pall_binned = [];
-        for bn = 4%1:length(BN)
+        for bn = 1:length(BN)
             bg = 1;
             mem = 0;
             while mem == 0
@@ -698,7 +717,7 @@ switch what
 
         
             % set the sequence length for "*******" trilas to one
-            D.seqlength(isnan(D.seqlength)) = 1;
+            D.seqlength(D.seqNumb==5) = 1;
             D.NumWarpSamp = NumWarpSampSlow* ones(size(D.TN));
             D.NumWarpSamp(logical(D.Fast)) = NumWarpSampFast;
             numEvents = max(D.seqlength) + 1;
@@ -712,7 +731,7 @@ switch what
                 trialName = ['PSD',num2str(tn)];
                 A = load(Bname , trialName);
                 eval(['A = A.' , trialName , ';']);
-                if  ~D.isError(tn)
+                if   ~D.isError(tn) & sum(sum(~isnan(D.EventMarker{tn}))) & sum(sum(~isnan(A)))
                     % check which block group this block falls into
                     % the normalized event markers in trial tn
                     idx = E1.NEM{1}(sn , 1:D.seqlength(tn)+1);
