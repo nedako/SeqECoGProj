@@ -595,8 +595,8 @@ switch what
                 %                 grid on
             end
             legend(leg , legen , 'Box' , 'off')
-%             title(['Percent Change in Power from Baseline in ' , sequenceType.tags{snid} ])
-            set(gca , 'YLim',[-4 6.5] , 'FontSize' , 34 , 'Box' , 'off' , 'YTick' , [-4 0 4]);
+            title(['Percent Change in Power from Baseline in ' , sequenceType.tags{snid} ])
+            set(gca , 'YLim',[-8 8] , 'FontSize' , 16 , 'Box' , 'off' , 'YTick' , [-4 0 4]);
             ylabel('(%)')
             xlabel('Frequency (Hz)')
             fCont = fCont +1;
@@ -625,8 +625,8 @@ switch what
             load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
             E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
             E.NumWarpSamp([1 6 7 8 9 12 16 20]) = NumWarpSampFast;
-            BG(bg) = find(strcmp(E.blockGroupNames , BlockGroup{bg}));
-            E = getrow(E , BG(bg));
+            BlG(bg) = find(strcmp(E.blockGroupNames , BlockGroup{bg}));
+            E = getrow(E , BlG(bg));
             if isempty(E.EM)
                 error('Nothing to plot!')
             end
@@ -759,12 +759,12 @@ switch what
         for bg = 1:length(BlockGroup)
             load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
            
-            BG(bg) = find(strcmp(blockGroupNames , BlockGroup{bg}));
-            E = getrow(E , BG(bg));
+            BlG(bg) = find(strcmp(blockGroupNames , BlockGroup{bg}));
+            E = getrow(E , BlG(bg));
             if isempty(E.EM)
                 error('Nothing to plot!')
             end
-            filename = [mainDir ,  'Group_Aligned_PSD' , num2str(BG(bg)),'.mat'];
+            filename = [mainDir ,  'Group_Aligned_PSD' , num2str(BlG(bg)),'.mat'];
             load(filename);
             Pall = getrow(Pall , Pall.seqNumb ~= 100 & ~Pall.isError);
             SN = unique(Pall.seqNumb);
@@ -776,8 +776,12 @@ switch what
                 % reduce the band and channel dimensions
                 for evnt = 1:T.seqlength(1)+1
                     for tn = 1:length(T.TN)
-                        temp = squeeze(T.PSD{tn , evnt}(:,bandofInterest,:));
-                        T.reducPSD{tn , evnt} = nanmean(temp(Chan2Plot , :) , 1);
+                        if~isempty(T.PSD{tn , evnt})
+                            temp = squeeze(T.PSD{tn , evnt}(:,bandofInterest,:));
+                            T.reducPSD{tn , evnt} = nanmean(temp(Chan2Plot , :) , 1);
+                        else
+                            T.reducPSD{tn , evnt} = nan(1, 5);
+                        end
                     end
                 end
                 T.blockgroup = bg*ones(size(T.BN));
@@ -903,13 +907,13 @@ switch what
         end
         for bg = 1:length(BlockGroup)
             load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
-           
-            BG(bg) = find(strcmp(blockGroupNames , BlockGroup{bg}));
-            E = getrow(E , BG(bg));
+          
+            BlG(bg) = find(strcmp(blockGroupNames , BlockGroup{bg}));
+            E = getrow(E , BlG(bg));
             if isempty(E.EM)
                 error('Nothing to plot!')
             end
-            filename = [mainDir ,  'Group_WarpedAligned_PSD' , num2str(BG(bg)),'.mat'];
+            filename = [mainDir ,  'Group_WarpedAligned_PSD' , num2str(BlG(bg)),'.mat'];
             load(filename);
             for i = 1:length(Pall.TN)
                 if sum(Pall.IPI(i,:)<120)
@@ -926,9 +930,13 @@ switch what
                 % reduce the band and channel dimensions
                 for evnt = 1:T.seqlength(1)+1
                     for tn = 1:length(T.TN)
-                        [sn evnt tn]
-                        temp = squeeze(T.PSD{tn , evnt}(:,bandofInterest,:));
-                        T.reducPSD{tn , evnt} = nanmean(temp(Chan2Plot , :) , 1);
+                        [bg sn evnt tn]
+                        if~isempty(T.PSD{tn , evnt})
+                            temp = squeeze(T.PSD{tn , evnt}(:,bandofInterest,:));
+                            T.reducPSD{tn , evnt} = nanmean(temp(Chan2Plot , :) , 1);
+                        else
+                            T.reducPSD{tn , evnt} = nan(1, 5);
+                        end
                     end
                 end
                 T.blockgroup = bg*ones(size(T.BN));
@@ -1052,12 +1060,12 @@ switch what
         for bg = 1:length(BlockGroup)
             load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
             
-            BG(bg) = find(strcmp(blockGroupNames , BlockGroup{bg}));
-            E = getrow(E , BG(bg));
+            BlG(bg) = find(strcmp(blockGroupNames , BlockGroup{bg}));
+            E = getrow(E , BlG(bg));
             if isempty(E.EM)
                 error('Nothing to plot!')
             end
-            filename = [mainDir ,  'Group_Aligned_PSD' , num2str(BG(bg)),'.mat'];
+            filename = [mainDir ,  'Group_Aligned_PSD' , num2str(BlG(bg)),'.mat'];
             load(filename);
             Pall = getrow(Pall , Pall.seqNumb ~= 100 & ~Pall.isError);
             SN = unique(Pall.seqNumb);
@@ -1077,19 +1085,17 @@ switch what
         end
         D = C;
         for tn = 1:length(D.TN)
-            chnkBnd = find(D.ChnkPlcmnt(tn , 2:end) == 1);
-            chnkWth  = [chnkBnd - 1 ,  chnkBnd+1];
-            chnkInd  = [chnkBnd , chnkWth];
+            chnkfirst = find(D.ChnkPlcmnt(tn , 2:end) == 1)+2; % plus 2 bcz the eventsare counted from stim onset
+            chnkbef  = [chnkfirst - 2 , chnkfirst -1];
+            chnkaft  = [chnkfirst + 1];
+            chnkInd  = [chnkbef , chnkfirst , chnkaft];
             cntr = 1;
             for evnt = chnkInd
-                % the frist element is always the chunk boundry and the
-                % next two are the one before and one after
                 D.chunkArrPSD{tn , cntr} = D.reducPSD{tn , evnt};
                 cntr =  cntr+1;
             end
         end
-        titleLab = {'Chunk Boundry Press'};
-        titleLab = [titleLab  , repmat({'Before Chunk Boundry' , 'After Chunk Boundry'} , 1 , .5*(length(chnkInd)-1))];
+        titleLab = [{'Within Chunk Press' , 'Last Chunk Press' , 'First Chunk Press' , 'Within Chunk Press'}];
         for evnt = 1:size(D.chunkArrPSD , 2)
             medEventLen = floor(median(cellfun(@length, D.chunkArrPSD(:,evnt))));
             maxLen = max(cellfun(@length, D.chunkArrPSD(:,evnt)));

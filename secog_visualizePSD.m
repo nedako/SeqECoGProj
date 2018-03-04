@@ -625,8 +625,8 @@ switch what
             load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
             E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
             E.NumWarpSamp([1 6 7 8 9 12 16 20]) = NumWarpSampFast;
-            BG(bg) = find(strcmp(E.blockGroupNames , BlockGroup{bg}));
-            E = getrow(E , BG(bg));
+            BlG(bg) = find(strcmp(E.blockGroupNames , BlockGroup{bg}));
+            E = getrow(E , BlG(bg));
             if isempty(E.EM)
                 error('Nothing to plot!')
             end
@@ -1085,19 +1085,17 @@ switch what
         end
         D = C;
         for tn = 1:length(D.TN)
-            chnkBnd = find(D.ChnkPlcmnt(tn , 2:end) == 1);
-            chnkWth  = [chnkBnd - 1 ,  chnkBnd+1];
-            chnkInd  = [chnkBnd , chnkWth];
+            chnkfirst = find(D.ChnkPlcmnt(tn , 2:end) == 1)+2; % plus 2 bcz the eventsare counted from stim onset
+            chnkbef  = [chnkfirst-2 , chnkfirst-1];
+            chnkaft  = [chnkfirst+1];
+            chnkInd  = [chnkbef , chnkfirst , chnkaft];
             cntr = 1;
             for evnt = chnkInd
-                % the frist element is always the chunk boundry and the
-                % next two are the one before and one after
                 D.chunkArrPSD{tn , cntr} = D.reducPSD{tn , evnt};
                 cntr =  cntr+1;
             end
         end
-        titleLab = {'Chunk Boundry Press'};
-        titleLab = [titleLab  , repmat({'Before Chunk Boundry' , 'After Chunk Boundry'} , 1 , .5*(length(chnkInd)-1))];
+        titleLab = [{'Within Chunk Press' , 'Last Chunk Press' , 'First Chunk Press' , 'Within Chunk Press'}];
         for evnt = 1:size(D.chunkArrPSD , 2)
             medEventLen = floor(median(cellfun(@length, D.chunkArrPSD(:,evnt))));
             maxLen = max(cellfun(@length, D.chunkArrPSD(:,evnt)));
