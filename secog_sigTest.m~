@@ -181,10 +181,11 @@ switch what
         
         %% significance tests
         %% testing the effect of sequence type and days on high gamma
-        bandnumb = 7;
+        bandnumb = 4;
         seqNumb = [30 20];
         A = getrow(D , ismember(D.band, bandnumb)  & ismember(D.seqNumb , seqNumb ));
         %         D.blockGroup(D.blockGroup>1) = 0;     % test day one vs all other days
+        
         if length(seqNumb)>1
             [p,tbl,stats] =  anovan(A.data , [A.blockgroup A.seqNumb],'model','interaction','varnames',{'Days' , 'Sequence Type'});
         else

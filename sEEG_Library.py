@@ -41,18 +41,17 @@ for i in range(0,len(temp)):
     ChanLabels[i]
 # load behavioral data
 temp = sio.loadmat(saveDir + 'AllData_Behav.mat')# , squeeze_me=True,struct_as_record=False);
-Dall = temp['Dall'];
-mdtype = Dall.dtype;
-# turn Dall into a paython dictonary
-Dall = {n: Dall[n][0, 0] for n in mdtype.names}
-# turn Dall into a Pandas dataframe
-Dall = pd.Series(Dall).to_frame()
-# get the list of keys in the Dall dictionary
-keyList = list()
-for i in Dall.keys():
-    keyList.append(i)
+temp = temp['Dall'];
+Dfields= temp.dtype.names;
+# turn temp into a paython dictonary
+# Dall = {n: temp[n][0, 0] for n in Dfields}
 
-
+# turn temp into a pandas dataframe
+Dall = pd.DataFrame(columns=Dfields)
+for n in Dfields:
+    A = temp[n][0, 0];
+    A = A.tolist();
+    exec('Dall.'+n +' = A')
 
 # if Channels has not been set, take everything
 try:
@@ -81,14 +80,8 @@ for b in range(len(BandInfo['bands'])):
     BandInfo['bandid'].append ([Fid , Lid]);
 
 # Import the BLock Info
-BlockInfo = open_workbook(mainDir+'BlockInfo.xlsx')
-df = pd.read_excel(open(mainDir+'BlockInfo.xlsx','rb'))
-[~, ~, BlockInfo] = xlsread([mainDir , 'BlockInfo.xlsx'],'Sheet1');
-BlockInfo = BlockInfo(2:end,:);
-BlockInfo(cellfun(@(x) ~isempty(x) && isnumeric(x) && isnan(x),BlockInfo)) = {''};
+BlockInfo = pd.read_excel(open(mainDir+'BlockInfo.xlsx','rb'))
 
-idx = cellfun(@ischar, BlockInfo);
-BlockInfo(idx) = cellfun(@(x) string(x), BlockInfo(idx), 'UniformOutput', false);
 Fs = 1024;
 Fs_ds = Fs/DownsampleRate;
 clearvars idx;

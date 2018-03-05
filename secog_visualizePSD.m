@@ -124,8 +124,13 @@ blockGroupTags = {'Natural Speed' , 'Slow Speed Day 1' , 'Slow Speed Day 2' ,'Sl
 SeqTrans = [5 11 22 33 44 55 0 1 2 3 4 103 104 203 204;...
             100 10 10 10 10 10 20 30 30 30 30 40 50 40 50];
         
-sequenceType.nums = [100 10 20 30 40 50];
-sequenceType.tags = {'Null Trials' , 'Single Finger Sequences Trials' , 'Random Sequences' , 'Trained Sequences' , 'Triplet Segments' , 'Quadruple Segments'}';
+sequenceType.TypeNums = [100 10 20 30 40 50];
+sequenceType.Typetags = {'Null Trials' , 'Single Finger Sequences Trials' , 'Random Sequences' , 'Trained Sequences' , 'Triplet Segments' , 'Quadruple Segments'}';
+
+sequenceType.SeqNums  = [5 11 22 33 44 55 0 1 2 3 4 103 203 104 204];
+sequenceType.Numtags = {'Null Trials' , 'Single Finger 1' , 'Single Finger 2' , 'Single Finger 3' , 'Single Finger 4' , 'Single Finger 5',...
+    'Random Sequences' , 'Structure 1231234' , 'Structure 1231234' , 'Structure 1234123' , 'Structure 1234123' ,...
+    'Triplet Segments','Triplet Segments' , 'Quadruple Segments','Quadruple Segments'}';
 
 BandInfo.bandsLab = {'Delta <4Hz' , 'Theta 5-8Hz' , 'Alpha 9-16Hz' , 'Beta 17-36Hz' , 'L-Gamma 37-70Hz' , 'H-Gamma 70-130' , 'NoBandLand 130-180'};
 BandInfo.bands = {[0 4], [5 8] [9 16] [17 36] [37 70] [70 110] [110 180]};
@@ -586,7 +591,7 @@ switch what
             text(80 ,5 , 'High Gamma' , 'FontSize' , 30)
             for n = 1:length(BlockGroup)
                 [n sn]
-                snid = find(sequenceType.nums == E.SN{BlG(n)}(sn));
+                snid = find(sequenceType.TypeNums == E.SN{BlG(n)}(sn));
                 bgid = find(strcmp(blockGroupNames , BlockGroup{n}));
                 legen = [legen , blockGroupTags{bgid}];
                 h(n).fig = plotshade(x{cg,n}{sn}' , p{cg,n}{sn} , e{cg,n}{sn},'transp' , .2 , 'patchcolor' , colorz{n} , 'linecolor' , colorz{n} , 'linewidth' , 3 , 'linestyle' , ':');
@@ -595,7 +600,7 @@ switch what
                 %                 grid on
             end
             legend(leg , legen , 'Box' , 'off')
-            title(['Percent Change in Power from Baseline in ' , sequenceType.tags{snid} ])
+            title(['Percent Change in Power from Baseline in ' , sequenceType.Typetags{snid} ])
             set(gca , 'YLim',[-8 8] , 'FontSize' , 16 , 'Box' , 'off' , 'YTick' , [-4 0 4]);
             ylabel('(%)')
             xlabel('Frequency (Hz)')
@@ -630,7 +635,7 @@ switch what
             if isempty(E.EM)
                 error('Nothing to plot!')
             end
-            filename = [mainDir ,  'PowerSpectrumBinned_TimeKept_SeqType' , num2str(BG(bg)),'.mat'];
+            filename = [mainDir ,  'PowerSpectrumBinned_TimeKept_SeqType' , num2str(BlG(bg)),'.mat'];
             load(filename , ['PSD_band' , num2str(bandofInterest)]);
             eval(['psd_b = PSD_band' , num2str(bandofInterest)]);
             chanGroup = {Chan2Plot};
@@ -652,8 +657,8 @@ switch what
         fig = figure;
         for bg = 1:length(BlockGroup)
             load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
-            BG(bg) = find(strcmp(E.blockGroupNames , BlockGroup{bg}));
-            E = getrow(E , BG(bg));
+            BlG(bg) = find(strcmp(E.blockGroupNames , BlockGroup{bg}));
+            E = getrow(E , BlG(bg));
             for sn = 1:length(psd_b)
                 T = getrow(D , D.seqNumb == E.SN{1}(sn) & D.blockgroup == bg);
                 data = reshape(T.data'  , numel(T.data) , 1);
@@ -668,9 +673,9 @@ switch what
         figCount = 1;
         for bg = 1:length(BlockGroup)
             load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
-            BG(bg) = find(strcmp(E.blockGroupNames , BlockGroup{bg}));
-            BlNames{bg} = blockGroupTags{BG(bg)};
-            E = getrow(E , BG(bg));
+            BlG(bg) = find(strcmp(E.blockGroupNames , BlockGroup{bg}));
+            BlNames{bg} = blockGroupTags{BlG(bg)};
+            E = getrow(E , BlG(bg));
             leg = [];
             legen = {};
             for sn = 1:length(E.SN{1})
@@ -683,9 +688,9 @@ switch what
                     leg = [leg , h(sn).fig];
                     hold on
                     grid on
-                    snid = find(sequenceType.nums == E.SN{1}(sn));
+                    snid = find(sequenceType.TypeNums == E.SN{1}(sn));
                     bgid = find(strcmp(blockGroupNames , BlockGroup{bg}));
-                    legen = [legen , sequenceType.tags{snid}];
+                    legen = [legen , sequenceType.Typetags{snid}];
                     xlabel('Normalized Time (ms)')
                     set(gca ,'YLim' , [-8 +3] , 'FontSize' , 16);
                 end
@@ -699,8 +704,8 @@ switch what
         figCount = 1;
         for sn = 1:length(E.SN{1})
             load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
-            BG(bg) = find(strcmp(E.blockGroupNames , BlockGroup{bg}));
-            E = getrow(E , BG(bg));
+            BlG(bg) = find(strcmp(E.blockGroupNames , BlockGroup{bg}));
+            E = getrow(E , BlG(bg));
             leg = [];
             legen = {};
             for bg = 1:length(BlockGroup)
@@ -708,7 +713,7 @@ switch what
                     NEM = E.NEM{1}(sn , ~isnan(E.NEM{1}(sn,:)));
                     % actual time in seconds to use for labeling the time axis
                     EM  = E.EM{1}(sn ,  ~isnan(E.EM{1}(sn,:)))/100;
-                    snid = find(sequenceType.nums == E.SN{1}(sn));
+                    snid = find(sequenceType.TypeNums == E.SN{1}(sn));
                     bgid = find(strcmp(blockGroupNames , BlockGroup{bg}));
                     subplot(1,length(E.SN{1})-1, figCount)
                     h(sn).fig = plotshade(x{sn,bg}' , p{sn,bg} , e{sn,bg},'transp' , .2 , 'patchcolor' , colorz{bg} , 'linecolor' , colorz{bg} , 'linewidth' , 3 , 'linestyle' , ':');
@@ -723,7 +728,7 @@ switch what
             end
             legend(leg , legen)
             figCount = figCount + 1;
-            title (['Average PSD for ' , sequenceType.tags{snid}])
+            title (['Average PSD for ' , sequenceType.Typetags{snid}])
         end
     case 'Aligned_SeqType'
         colorz = {[0 0  1],[1 0 0],[0 1 0],[1 0 1],[0 1 1],[0.7 0.7 0.7],[1 1 0],[.3 .3 .3]};
@@ -741,12 +746,11 @@ switch what
             'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9'}';
 
         if ~exist('bandofInterest')
-            error('Define band to  plot -- > bandofInterest')
+            error('Define band to plot -- > bandofInterest')
         end
 
         C = [];
         T = [];
-        
         if sum(ismember (BlockGroup , blockGroupNames([12 16 20])))
             seq = input('Triplet or Quadruple? (t/q)', 's');
             switch seq
@@ -755,10 +759,11 @@ switch what
                 case {'t'}
                     selectSN = 40;
             end
+        elseif sum(ismember (BlockGroup , blockGroupNames([10 11 13 14 17 18])))
+            NT = input('Plot according to SeqNumb or SeqTyoe? (n/t)', 's');
         end
         for bg = 1:length(BlockGroup)
             load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
-           
             BlG(bg) = find(strcmp(blockGroupNames , BlockGroup{bg}));
             E = getrow(E , BlG(bg));
             if isempty(E.EM)
@@ -766,7 +771,20 @@ switch what
             end
             filename = [mainDir ,  'Group_Aligned_PSD' , num2str(BlG(bg)),'.mat'];
             load(filename);
-            Pall = getrow(Pall , Pall.seqNumb ~= 100 & ~Pall.isError);
+            if strcmp(NT , 'n')
+                D = getrow(Dall , ismember(Dall.BN , unique(Pall.BN)));
+                D.seqNumb(D.seqNumb == 2) = 1; % seqNumb 1  and 2 have the same structure
+                
+                D.seqNumb(D.seqNumb == 4) = 3; % seqNumb 4  and 3 have the same structure
+                Pall.seqNumb = D.seqNumb;
+                Pall = getrow(Pall , Pall.seqNumb ~= 5 & ~Pall.isError);
+                seqInfo.nums = sequenceType.SeqNums;
+                seqInfo.tags = sequenceType.Numtags;
+            else
+                Pall = getrow(Pall , Pall.seqNumb ~= 100 & ~Pall.isError);
+                seqInfo.nums = sequenceType.TypeNums;
+                seqInfo.tags = sequenceType.Typetags;
+            end
             SN = unique(Pall.seqNumb);
             if exist('selectSN')
               SN =   selectSN;
@@ -825,7 +843,7 @@ switch what
         figure('color' , 'white')
         figCount = 1;
         for sn = 1:length(SN)
-            snid = find(sequenceType.nums == E.SN{1}(sn));
+            snid = find(seqInfo.nums == SN(sn));
             for evnt = 1:T.seqlength(1)+1
                 subplot(length(SN),V , figCount);
                 leg = [];
@@ -840,8 +858,8 @@ switch what
                 end
                 figCount = figCount+1;
                 
-                title (['Press ' ,num2str(evnt-1),' PSD for ' , sequenceType.tags{snid}])
-                set(gca , 'Box' , 'off' , 'YLim' , [-8 , 8]);
+                title (['Press ' ,num2str(evnt-1),' PSD for ' , seqInfo.tags{snid}])
+                set(gca , 'Box' , 'off');% , 'YLim' , [-8 , 8]);
                 line([10,10] , [min(p{sn,bg,evnt}) max(p{sn,bg,evnt})] , 'LineWidth' , 3 , 'color' , 'k')
             end
         end
@@ -856,17 +874,17 @@ switch what
                 leg = [];
                 legen = {};
                 for sn = 1:length(SN)
-                    snid = find(sequenceType.nums == E.SN{1}(sn));
+                    snid = find(seqInfo.nums == SN(sn));
                     h(sn).fig = plotshade(x{sn,bg,evnt}' , p{sn,bg,evnt} , e{sn,bg,evnt},'transp' , .2 , 'patchcolor' , colorz{sn} , 'linecolor' , colorz{sn} , 'linewidth' , 3 , 'linestyle' , ':');
                     leg = [leg , h(sn).fig];
                     hold on
                     grid on
-                    legen = [legen , sequenceType.tags{snid}];
+                    legen = [legen , seqInfo.tags{snid}];
                 end
                 figCount = figCount+1;
                 
                 title (['Press ' ,num2str(evnt-1),' PSD for ' , blockGroupTags{bgid}])
-                set(gca , 'Box' , 'off' , 'YLim' , [-8 , 8])
+                set(gca , 'Box' , 'off');% , 'YLim' , [-8 , 8])
                 line([10,10] , [min(p{sn,bg,evnt}) max(p{sn,bg,evnt})] , 'LineWidth' , 3 , 'color' , 'k')
             end
         end 
@@ -980,7 +998,7 @@ switch what
         figure('color' , 'white')
         figCount = 1;
         for sn = 1:length(SN)
-            snid = find(sequenceType.nums == E.SN{1}(sn));
+            snid = find(sequenceType.TypeNums == E.SN{1}(sn));
             for evnt = 1:T.seqlength(1)+1
                 subplot(length(SN),V , figCount);
                 leg = [];
@@ -995,7 +1013,7 @@ switch what
                 end
                 figCount = figCount+1;
                 
-                title (['Press ' ,num2str(evnt-1),' PSD for ' , sequenceType.tags{snid}])
+                title (['Press ' ,num2str(evnt-1),' PSD for ' , sequenceType.Typetags{snid}])
                 %                 set(gca , 'Box' , 'off' , 'YLim' , [-8 , 8]);
                 line([5,5] , [min(p{sn,bg,evnt}) max(p{sn,bg,evnt})] , 'LineWidth' , 3 , 'color' , 'k')
             end
@@ -1011,12 +1029,12 @@ switch what
                 leg = [];
                 legen = {};
                 for sn = 1:length(SN)
-                    snid = find(sequenceType.nums == E.SN{1}(sn));
+                    snid = find(sequenceType.TypeNums == E.SN{1}(sn));
                     h(sn).fig = plotshade(x{sn,bg,evnt}' , p{sn,bg,evnt} , e{sn,bg,evnt},'transp' , .2 , 'patchcolor' , colorz{sn} , 'linecolor' , colorz{sn} , 'linewidth' , 3 , 'linestyle' , ':');
                     leg = [leg , h(sn).fig];
                     hold on
                     grid on
-                    legen = [legen , sequenceType.tags{snid}];
+                    legen = [legen , sequenceType.Typetags{snid}];
                 end
                 figCount = figCount+1;
                 
@@ -1043,7 +1061,7 @@ switch what
             error('Define band to  plot -- > bandofInterest')
         end
         
-        SNofInterest = sequenceType.nums(find(strcmp(sequenceType.tags , 'Trained Sequences' )));
+        SNofInterest = sequenceType.TypeNums(find(strcmp(sequenceType.Typetags , 'Trained Sequences' )));
         
         C = [];
         T = [];
@@ -1169,7 +1187,6 @@ switch what
             figCount = figCount+1;
         end 
         legend(leg , titleLab)
-        
-        
+                
 end
 
