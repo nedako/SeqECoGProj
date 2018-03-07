@@ -79,8 +79,8 @@ fastBlock = horzcat(blockGroups{1} ,blockGroups{6} , blockGroups{7}, blockGroups
     blockGroups{12}, blockGroups{16}, blockGroups{20});
 
 
-BandInfo.bandsLab = {'Delta <4Hz' , 'Theta 5-8Hz' , 'Alpha 9-16Hz' , 'Beta 17-36Hz' , 'L-Gamma 37-70Hz' , 'H-Gamma 70-130' , 'NoBandLand 130-180'};
-BandInfo.bands = {[0 4], [5 8] [9 16] [17 36] [37 70] [70 110] [110 180]};
+BandInfo.bandsLab = {'Delta <4Hz' , 'Theta 5-8Hz' , 'Alpha 9-16Hz' , 'Beta 17-36Hz' , 'L-Gamma 37-80Hz' , 'H-Gamma 80-100HZ' , 'HIGH 100-180HZ'};
+BandInfo.bands = {[0 4], [5 8] [9 16] [17 36] [37 80] [80 110] [100 180]};
 
 
 switch what

@@ -420,7 +420,7 @@ switch what
                     B = squeeze(Pall.AvgPow{sn}(Chan2Plot(ch),:,:));
                     contourf([1:E.NumWarpSamp],frex,B,60,'linecolor','none')
                     colorbar
-%                     caxis([-0.08 0.07])
+                    caxis([-0.08 0.07])
                     title (['Raw PSD for SeqNumb =  ', num2str(E.SN{1}(sn)),', in Channel ' , ChanLabels{Chan2Plot(ch)}])
                     hold on
                     xtikx = {};
@@ -479,13 +479,14 @@ switch what
                 
                 subplot(length(E.SN{1})-1 ,1, figCount)
                 for b =1:length(BandInfo.bandsLab)
-                    B  = 20*squeeze(nanmean(AvgPow{sn}(Chan2Plot , b , :) , 1))+.7*b;
+                    temp = nanmean(AvgPow{sn}(Chan2Plot(ch) , b , :) , 1);
+                    B  = 10*squeeze(AvgPow{sn}(Chan2Plot(ch) , b , :))+.7*b;
                     plot([1:E.NumWarpSamp] , B , 'LineWidth' , 3)
                     T(b) = nanmedian(B);
                     hold on
                 end
                 hold off
-                title (['Average PSD for ' ,E.blockGroupNames{1},', ' , num2str(stim)])
+                title (['Average PSD for ' ,E.blockGroupNames{1}, ' Channel ' , ChanLabels{Chan2Plot(ch)} ,', ' , num2str(stim)])
                 xtikx = {};
                 for lin = 1:length(NEM)
                     xtikx = [xtikx  , num2str(EM(lin))];
@@ -534,9 +535,9 @@ switch what
                 AEbl{cg}(sn,:) = nanmean(Ble(chanGroup{cg}, :) , 1);
                 subplot(length(chanGroup) , length(Pall.AvgPowTR) ,fCont)
                 title(['sn = ' , num2str(Pall.SN{1}(sn))])
-                h1 = plotshade(frex , APtr{cg}(sn,:) ,AEtr{cg}(sn,:),'transp' , .2 , 'patchcolor' , 'b' , 'linecolor' , 'b' , 'linewidth' , 3 )
+                h1 = plotshade(frex , APtr{cg}(sn,:) ,AEtr{cg}(sn,:),'transp' , .2 , 'patchcolor' , 'b' , 'linecolor' , 'b' , 'linewidth' , 3 , 'linestyle' , ':')
                 hold on
-                h2 = plotshade(frex , APbl{cg}(sn,:) ,AEbl{cg}(sn,:),'transp' , .2 , 'patchcolor' , 'r' , 'linecolor' , 'r' , 'linewidth' , 3 )
+                h2 = plotshade(frex , APbl{cg}(sn,:) ,AEbl{cg}(sn,:),'transp' , .2 , 'patchcolor' , 'r' , 'linecolor' , 'r' , 'linewidth' , 3 , 'linestyle' , ':')
                 title(['Average Powerfor sequence type ' , num2str(E.SN{1}(sn)) ])
                 fCont = fCont +1;
                 legend([h1,h2] , {'Trial' , 'Baseline'})
@@ -583,31 +584,28 @@ switch what
             subplot(1,length(Pall.PowTR),sn)
             leg = [];
             legen = {};
-            rectangle('position' , [17 -10 19 20] , 'EdgeColor' , 'none' , 'FaceColor' , [.6 .6 .6])
-            
-            hold on
-            rectangle('position' , [37 -10 43 20] , 'EdgeColor' , 'none' , 'FaceColor' , [.7 .7 .7])
-            
-            rectangle('position' , [81 -10 20 20] , 'EdgeColor' , 'none' , 'FaceColor' , [.8 .8 .8])
-            
-            rectangle('position' , [101 -10 80 20] , 'EdgeColor' , 'none' , 'FaceColor' ,[.9 .9 .9])
+            rectangle('position' , [17 -6 19 10] , 'EdgeColor' , 'none' , 'FaceColor' , [.6 .6 .6])
             text(19 ,5 , 'Beta' , 'FontSize' , 16)
+            hold on
+            rectangle('position' , [37 -6 43 10] , 'EdgeColor' , 'none' , 'FaceColor' , [.7 .7 .7])
             text(39 ,5 , 'Low Gamma' , 'FontSize' , 16)
+            rectangle('position' , [81 -6 20 10] , 'EdgeColor' , 'none' , 'FaceColor' , [.8 .8 .8])
             text(80 ,5 , 'High Gamma' , 'FontSize' , 16)
-            text(110,5 , 'Very High' , 'FontSize' , 16)
+            rectangle('position' , [101 -6 80 10] , 'EdgeColor' , 'none' , 'FaceColor' ,[.9 .9 .9])
+            text(100 ,5 , 'Very High' , 'FontSize' , 16)
             for n = 1:length(BlockGroup)
                 [n sn]
                 snid = find(sequenceType.TypeNums == E.SN{BlG(n)}(sn));
                 bgid = find(strcmp(blockGroupNames , BlockGroup{n}));
                 legen = [legen , blockGroupTags{bgid}];
-                h(n).fig = plotshade(x{cg,n}{sn}' , p{cg,n}{sn} , e{cg,n}{sn},'transp' , .2 , 'patchcolor' , colorz{n} , 'linecolor' , colorz{n} , 'linewidth' , 3 );
+                h(n).fig = plotshade(x{cg,n}{sn}' , p{cg,n}{sn} , e{cg,n}{sn},'transp' , .2 , 'patchcolor' , colorz{n} , 'linecolor' , colorz{n} , 'linewidth' , 3 , 'linestyle' , ':');
                 leg = [leg , h(n).fig];
                 hold on
                 %                 grid on
             end
             legend(leg , legen , 'Box' , 'off')
             title(['Percent Change in Power from Baseline in ' , sequenceType.Typetags{snid} ])
-            set(gca , 'YLim',[-12 12] , 'FontSize' , 16 , 'Box' , 'off');
+            set(gca , 'YLim',[-8 8] , 'FontSize' , 16 , 'Box' , 'off' , 'YTick' , [-4 0 4]);
             ylabel('(%)')
             xlabel('Frequency (Hz)')
             fCont = fCont +1;
@@ -690,7 +688,7 @@ switch what
                     % actual time in seconds to use for labeling the time axis
                     EM  = E.EM{1}(sn ,  ~isnan(E.EM{1}(sn,:)))/100;
                     subplot(1,length(BlockGroup), figCount)
-                    h(sn).fig = plotshade(x{sn,bg}' , p{sn,bg} , e{sn,bg},'transp' , .2 , 'patchcolor' , colorz{sn} , 'linecolor' , colorz{sn} , 'linewidth' , 3 );
+                    h(sn).fig = plotshade(x{sn,bg}' , p{sn,bg} , e{sn,bg},'transp' , .2 , 'patchcolor' , colorz{sn} , 'linecolor' , colorz{sn} , 'linewidth' , 3 , 'linestyle' , ':');
                     leg = [leg , h(sn).fig];
                     hold on
                     grid on
@@ -722,7 +720,7 @@ switch what
                     snid = find(sequenceType.TypeNums == E.SN{1}(sn));
                     bgid = find(strcmp(blockGroupNames , BlockGroup{bg}));
                     subplot(1,length(E.SN{1})-1, figCount)
-                    h(sn).fig = plotshade(x{sn,bg}' , p{sn,bg} , e{sn,bg},'transp' , .2 , 'patchcolor' , colorz{bg} , 'linecolor' , colorz{bg} , 'linewidth' , 3 );
+                    h(sn).fig = plotshade(x{sn,bg}' , p{sn,bg} , e{sn,bg},'transp' , .2 , 'patchcolor' , colorz{bg} , 'linecolor' , colorz{bg} , 'linewidth' , 3 , 'linestyle' , ':');
                     leg = [leg , h(sn).fig];
                     hold on
                     grid on
@@ -862,7 +860,7 @@ switch what
                 for bg = 1:length(BlockGroup)
                     if ~isnan(x{sn,bg,evnt}) & ~isempty(x{sn,bg,evnt})
                         bgid = find(strcmp(blockGroupNames , BlockGroup{bg}));
-                        h(sn).fig = plotshade(x{sn,bg,evnt}' , p{sn,bg,evnt} , e{sn,bg,evnt},'transp' , .2 , 'patchcolor' , colorz{bg} , 'linecolor' , colorz{bg} , 'linewidth' , 3 );
+                        h(sn).fig = plotshade(x{sn,bg,evnt}' , p{sn,bg,evnt} , e{sn,bg,evnt},'transp' , .2 , 'patchcolor' , colorz{bg} , 'linecolor' , colorz{bg} , 'linewidth' , 3 , 'linestyle' , ':');
                         leg = [leg , h(sn).fig];
                         hold on
                         grid on
@@ -894,7 +892,7 @@ switch what
                     legen = {};
                     for sn = 1:length(SN)
                         snid = find(seqInfo.nums == SN(sn));
-                        h(sn).fig = plotshade(x{sn,bg,evnt}' , p{sn,bg,evnt} , e{sn,bg,evnt},'transp' , .2 , 'patchcolor' , colorz{sn} , 'linecolor' , colorz{sn} , 'linewidth' , 3 );
+                        h(sn).fig = plotshade(x{sn,bg,evnt}' , p{sn,bg,evnt} , e{sn,bg,evnt},'transp' , .2 , 'patchcolor' , colorz{sn} , 'linecolor' , colorz{sn} , 'linewidth' , 3 , 'linestyle' , ':');
                         leg = [leg , h(sn).fig];
                         hold on
                         grid on
@@ -1022,7 +1020,7 @@ switch what
                 legen = {};
                 for bg = 1:length(BlockGroup)
                     bgid = find(strcmp(blockGroupNames , BlockGroup{bg}));
-                    h(sn).fig = plotshade(x{sn,bg,evnt}' , p{sn,bg,evnt} , e{sn,bg,evnt},'transp' , .2 , 'patchcolor' , colorz{bg} , 'linecolor' , colorz{bg} , 'linewidth' , 3 );
+                    h(sn).fig = plotshade(x{sn,bg,evnt}' , p{sn,bg,evnt} , e{sn,bg,evnt},'transp' , .2 , 'patchcolor' , colorz{bg} , 'linecolor' , colorz{bg} , 'linewidth' , 3 , 'linestyle' , ':');
                     leg = [leg , h(sn).fig];
                     hold on
                     grid on
@@ -1047,7 +1045,7 @@ switch what
                 legen = {};
                 for sn = 1:length(SN)
                     snid = find(sequenceType.TypeNums == E.SN{1}(sn));
-                    h(sn).fig = plotshade(x{sn,bg,evnt}' , p{sn,bg,evnt} , e{sn,bg,evnt},'transp' , .2 , 'patchcolor' , colorz{sn} , 'linecolor' , colorz{sn} , 'linewidth' , 3 );
+                    h(sn).fig = plotshade(x{sn,bg,evnt}' , p{sn,bg,evnt} , e{sn,bg,evnt},'transp' , .2 , 'patchcolor' , colorz{sn} , 'linecolor' , colorz{sn} , 'linewidth' , 3 , 'linestyle' , ':');
                     leg = [leg , h(sn).fig];
                     hold on
                     grid on
@@ -1168,7 +1166,7 @@ switch what
                 legen = {};
                 for bg = 1:length(BlockGroup)
                     bgid = find(strcmp(blockGroupNames , BlockGroup{bg}));
-                    h.fig = plotshade(x{bg,evnt}' , p{bg,evnt} , e{bg,evnt},'transp' , .2 , 'patchcolor' , colorz{bg} , 'linecolor' , colorz{bg} , 'linewidth' , 3 );
+                    h.fig = plotshade(x{bg,evnt}' , p{bg,evnt} , e{bg,evnt},'transp' , .2 , 'patchcolor' , colorz{bg} , 'linecolor' , colorz{bg} , 'linewidth' , 3 , 'linestyle' , ':');
                     leg = [leg , h.fig];
                     hold on
                     grid on
@@ -1192,7 +1190,7 @@ switch what
             for evnt = 1:size(D.chunkArrPSD  , 2)
                
                 legen = {};
-                h(evnt).fig = plotshade(x{bg,evnt}' , p{bg,evnt} , e{bg,evnt},'transp' , .2 , 'patchcolor' , colorz{evnt} , 'linecolor' , colorz{evnt} , 'linewidth' , 3 );
+                h(evnt).fig = plotshade(x{bg,evnt}' , p{bg,evnt} , e{bg,evnt},'transp' , .2 , 'patchcolor' , colorz{evnt} , 'linecolor' , colorz{evnt} , 'linewidth' , 3 , 'linestyle' , ':');
                 leg = [leg , h(evnt).fig];
                 hold on
                 grid on

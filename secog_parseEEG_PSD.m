@@ -78,8 +78,8 @@ Dall.Fast(ismember(Dall.BN , fastBlock)) = 1;
 min_freq =  FreqRange(1);
 max_freq = FreqRange(2);
 frex = linspace(min_freq, max_freq,numFreqBins);
-BandInfo.bandsLab = {'Delta <4Hz' , 'Theta 5-8Hz' , 'Alpha 9-16Hz' , 'Beta 17-36Hz' , 'L-Gamma 37-70Hz' , 'H-Gamma 70-130' , 'NoBandLand 130-180'};
-BandInfo.bands = {[0 4], [5 8] [9 16] [17 36] [37 70] [70 110] [110 180]};
+BandInfo.bandsLab = {'Delta <4Hz' , 'Theta 5-8Hz' , 'Alpha 9-16Hz' , 'Beta 17-36Hz' , 'L-Gamma 37-80Hz' , 'H-Gamma 80-100HZ' , 'HIGH 100-180HZ'};
+BandInfo.bands = {[0 4], [5 8] [9 16] [17 36] [37 80] [80 100] [100 180]};
 for b = 1:length(BandInfo.bands)
     BandInfo.bandid{b} = [find(frex>BandInfo.bands{b}(1) ,1, 'first') , find(frex<BandInfo.bands{b}(2) ,1, 'last')];
 end

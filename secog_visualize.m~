@@ -263,7 +263,7 @@ switch what
         ANA1.RT = ANA1.AllPressTimes(:,1);
         ANA0.RT = ANA0.AllPressTimes(:,1);
 
-        out.RT = anovan([ANA1.RT ; ANA0.RT] , [[0*ANA1.RT ; 1+0*ANA0.RT] [ANA1.Day ; ANA0.Day]]  , 'display' , 'on' , 'varnames' , {'Quadruple/Trilet' , 'Day'} , 'model' , 'full');
+        out.RT = anovan([ANA1.RT ; ANA0.RT] , [[0*ANA1.RT ; 1+0*ANA0.RT] [ANA1.Day ; ANA0.Day]]  , 'display' , 'on' , 'varnames' , {'Quadruple/Trilet' , 'Day'});
         h1 = figure('color' , 'white');
         [xs,PLOTs,ERRORs] = lineplot(ANA1.Day,ANA1.RT);
         hold on
@@ -289,13 +289,14 @@ switch what
         %% IPI per day
         ANA = getrow(Dall , Dall.isgood & ~Dall.isError & ismember(Dall.seqNumb , [11 22 33 44 55]));
         ANA.RT = ANA.AllPressTimes(:,1);
-        out.RT = anovan([ANA.RT] ,[ANA.Day ANA.seqNumb] , 'display' , 'on' , 'model' , 'full','varnames' , {'Day', 'Single Finger Sequences'});
-        figure('color' , 'white')
+        out.RT = anovan([ANA.RT] ,[ANA.Day ANA.seqNumb] , 'display' , 'on' , 'model' , 'full ');
         [xs,PLOTs,ERRORs] = lineplot([ANA.Day ANA.seqNumb],ANA.RT , 'style_shade');
-        title(['Reaction Time'])
+        figure('color' , 'white')
+        hold on
+        title(['Reaction Time')
         ylabel('msec')
         xlabel('Training Days')
-        set(gca ,'FontSize' , 20)
+        set(gca , 'XTick' , unique(ANA.Day),'FontSize' , 20)
         grid on       
     case 'MT_SF'
         
