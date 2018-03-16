@@ -29,10 +29,11 @@ prefix = 'ecog1_';
 baseDir = '/Users/nkordjazi/Documents/SeqECoG/analyze';
 %baseDir = '/Users/nkordjazi/Documents/SeqEye/se1/SeqEye1/se1_data/analyze';
 % subj_name = {'XW' , 'ML' , 'DS' , 'BM' , 'HK' , 'BW'};
-subj_name = {'P2' , 'P4'};
+subj_name = {'P2' , 'P4' , 'P5'};
 % the blocks per day are different for every participnat
 BlPerDay(1).Day = {[1:12] , [13: 25] , [26:39] , [40:44]};
 BlPerDay(2).Day = {[1:12] , [13: 26] , [27:38]};
+BlPerDay(3).Day = {[1:12] , [13: 24] , [25:36] , [37:48]};
 load([baseDir , '/CMB.mat'])
 %load([baseDir , '/se1_all.mat'])
 % D   = load('/Users/nedakordjazi/Documents/SeqEye/SequenceHierarchical/Analysis/sh3_avrgPattern.mat');

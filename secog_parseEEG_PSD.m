@@ -3,7 +3,7 @@ function Dout  = secog_parseEEG_PSD(what , Dall , subjNum, varargin)
 %% It also calculates the PSD on the whole block and then parses up the PSD inot trials. This is mainly to avoid any window effect on single trials
 c = 1;
 %% setup the defaults and deal with the varargin
-subjname = {'P2' , 'P4'};
+subjname = {'P2' , 'P4' , 'P5'};
 mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} , '/Packed/'] ;
 saveDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} , '/'] ;
 DownsampleRate = 10;
@@ -153,42 +153,42 @@ switch what
                     A = filter(b,a , B);
                     Beeg.values(ch , :) = A;
                 end
-                start_tr = find(marker == 1); % starts of trials
+                BlockPow.start_tr = find(marker == 1); % starts of trials
                 % right now the end TTl pulse is being sent by the releas eof
                 % the last finger, so is not aligned to the last press time. so
                 % better define it this way for trials with presses
-                end_tr = find(marker == -1);  % ends of trials
-                for tn = 3:length(start_tr)
+                BlockPow.end_tr = find(marker == -1);  % ends of trials
+                for tn = 3:length(BlockPow.start_tr)
                     tn
                     if ~isnan(D.AllPressTimes(tn , D.seqlength(tn)))
-                        end_tr(tn) = start_tr(tn) + Fs*(D.AllPressTimes(tn , D.seqlength(tn))/1000)';
+                        BlockPow.end_tr(tn) = BlockPow.start_tr(tn) + Fs*(D.AllPressTimes(tn , D.seqlength(tn))/1000)';
                     end
                 end
-                start_tr = floor(start_tr / DownsampleRate);
-                end_tr = floor(end_tr / DownsampleRate);
+                BlockPow.start_tr = floor(BlockPow.start_tr / DownsampleRate);
+                BlockPow.end_tr = floor(BlockPow.end_tr / DownsampleRate);
                 for ch = 1:size(Beeg.values , 1)
                     Chname{ch} = ['RawEEGpower',num2str(ch)];
-                    [REG, BandInfo] = secog_waveletPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate);
+                    [BlockPow.REG, BandInfo] = secog_waveletPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate);
                     % normalize each trial to baseline : TimeDelay ms before the stim  onset
-                    for tr = 1:length(start_tr)
+                    for tr = 1:length(BlockPow.start_tr)
                         [ch tr]
-                        X = nanmean(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay):start_tr(tr)) , 2);
+                        X = nanmean(BlockPow.REG(:,BlockPow.start_tr(tr)-floor(Fs_ds*TimeDelay):BlockPow.start_tr(tr)) , 2);
                         eval(['D.decompBL{tr,1}(ch , :,:)  = X;']);
                         
-                        X = REG(:,start_tr(tr) : end_tr(tr));
+                        X = BlockPow.REG(:,BlockPow.start_tr(tr) : BlockPow.end_tr(tr));
                         eval(['D.decompTR{tr,1}(ch , :,:)  = X;']);
                         
-                        X = REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay) : start_tr(tr)-1);
+                        X = BlockPow.REG(:,BlockPow.start_tr(tr)-floor(Fs_ds*TimeDelay) : BlockPow.start_tr(tr)-1);
                         eval(['D.decompBefTR{tr,1}(ch , :,:)  = X;']);
                         
-                        X = REG(:,end_tr(tr)+1 : end_tr(tr)+floor(Fs_ds*2*TimeDelay));
+                        X = BlockPow.REG(:,BlockPow.end_tr(tr)+1 : BlockPow.end_tr(tr)+floor(Fs_ds*2*TimeDelay));
                         eval(['D.decompAftTR{tr,1}(ch , :,:)  = X;']);
                     end
                     disp(['PSD calculation for block ' , num2str(i) , ', channel ' , num2str(ch) , ' completed'])
                     clear REG
                 end
-                if length(start_tr)<length(D.TN)
-                    missing = abs(length(start_tr)-length(D.TN));
+                if length(BlockPow.start_tr)<length(D.TN)
+                    missing = abs(length(BlockPow.start_tr)-length(D.TN));
                     missingTR = [length(D.TN)-(missing-1) : length(D.TN)];
                     for mtr = missingTR
                         eval(['D.decompBL{mtr,1}  = NaN']);
@@ -197,6 +197,7 @@ switch what
                         eval(['D.decompAftTR{mtr,1} = NaN;']);
                     end
                 end
+                BlockPow.REG
                 
                 
                 %% save the unbinned data in separate blocks for managability in size
@@ -265,9 +266,6 @@ switch what
         fName1 =  BlockInfo{1,4};
         tn = 1;
         load(fName1);
-        
-        
-        %%
         for i = 1:size(BlockInfo , 1)
             clear Pall
             
@@ -292,35 +290,43 @@ switch what
                     A = filter(b,a , B);
                     Beeg.values(ch , :) = A;
                 end
-                start_tr = find(marker == 1); % starts of trials
+                BlockPow.start_tr = find(marker == 1); % starts of trials
                 % right now the end TTl pulse is being sent by the releas eof
                 % the last finger, so is not aligned to the last press time. so
                 % better define it this way for trials with presses
-                end_tr = find(marker == -1);  % ends of trials
-                for tn = 3:length(start_tr)
+                BlockPow.end_tr = find(marker == -1);  % ends of trials
+                for tn = 3:length(BlockPow.start_tr)
                     if ~isnan(D.AllPressTimes(tn , D.seqlength(tn)))
-                        end_tr(tn) = start_tr(tn) + Fs*(D.AllPressTimes(tn , D.seqlength(tn))/1000)';
+                        BlockPow.end_tr(tn) = BlockPow.start_tr(tn) + Fs*(D.AllPressTimes(tn , D.seqlength(tn))/1000)';
                     end
                 end
-                start_tr = floor(start_tr / DownsampleRate);
-                end_tr = floor(end_tr / DownsampleRate);
+                BlockPow.start_tr = floor(BlockPow.start_tr / DownsampleRate);
+                BlockPow.end_tr = floor(BlockPow.end_tr / DownsampleRate);
                 for ch = 1:size(Beeg.values , 1)
+                    clear baseline
                     Chname{ch} = ['RawEEGpower',num2str(ch)];
-                    [REG, BandInfo] = secog_waveletPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate);
-                    REG = 10*log10(abs(REG).^2);
+                    [BlockPow.REG(ch,:,:), BandInfo] = secog_waveletPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate);
+                     BlockPow.REG(ch,:,:) = 10*log10(abs(BlockPow.REG(ch,:,:)).^2);
+                    for tr = 1:length(BlockPow.start_tr)
+                        % consider the baseline to be the average of all
+                        % the baseline powers from 250 ms before stim onset
+                        %  to 50 ms before stim onset
+                        baseline(tr, :) = squeeze(nanmean(BlockPow.REG(ch,:,BlockPow.start_tr(tr)-floor(Fs_ds*TimeDelay/2):BlockPow.start_tr(tr)-floor(Fs_ds*TimeDelay/10)) , 3));
+                    end
+%                      baseline = nanmean(baseline , 1)';
                     % normalize each trial to baseline : TimeDelay ms before the stim  onset
-                    for tr = 1:length(start_tr)
-                        baseline = nanmean(REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay):start_tr(tr)) , 2);
-                        X = REG(:,start_tr(tr)-floor(Fs_ds*TimeDelay) : end_tr(tr)+floor(Fs_ds*2*TimeDelay));
-                        X = (X - repmat(baseline , 1,size(X,2)))./repmat(baseline , 1,size(X,2));
+                    for tr = 1:length(BlockPow.start_tr)
+                        X = squeeze(BlockPow.REG(ch,:,BlockPow.start_tr(tr)-floor(Fs_ds*TimeDelay) : BlockPow.end_tr(tr)+floor(Fs_ds*2*TimeDelay)));
+                        X = (X - repmat( baseline(tr, :)' , 1,size(X,2)))./repmat( baseline(tr, :)' , 1,size(X,2));
                         eval(['D.PSD{tr,1}(ch , :,:)  = X;']);
                     end
+                    BlockPow.BaseLine{ch} = baseline;
                     disp(['PSD calculation for block ' , num2str(i) , ', channel ' , num2str(ch) , ' completed'])
                     clear REG
                 end
                 % in case some trials at the end didnt get recorded on the marker
-                if length(start_tr)<length(D.TN)
-                    missing = abs(length(start_tr)-length(D.TN));
+                if length(BlockPow.start_tr)<length(D.TN)
+                    missing = abs(length(BlockPow.start_tr)-length(D.TN));
                     missingTR = [length(D.TN)-(missing-1) : length(D.TN)];
                     for mtr = missingTR
                         eval(['D.PSD{mtr,1}  = NaN;']);
@@ -363,7 +369,11 @@ switch what
                 end
             end
             Dout = addstruct(Dout , P);
-            clear D P
+            if exist('BlockPow')
+                saveName = [saveDir,'BlockPow' ,num2str(i) ,'.mat'];
+                save(saveName,'-struct','BlockPow', '-v7.3')
+            end
+            clear D P baseline BlockPow
         end
         load([saveDir , 'AllData_Behav.mat'])
         Dall.Pow_Norm_stim = Dout.Pow_Norm_stim;
@@ -634,7 +644,6 @@ switch what
                 end
             end
             for tn = 3:length(D.TN)
-
                 [bn tn]
                 trialName = ['DEC',num2str(tn)];
                 A = load(Bname , trialName);
@@ -650,9 +659,9 @@ switch what
                     A  = tempAll  - repmat(AvgPowBL , 1,1,size(tempAll , 3));
                     % the normalized event markers in trial tn
                     idx = find(D.EventMarker{tn});
-                    idx = [idx , idx(end) + 30]; % take the last event with 300 ms after the last press
-                    for e = 1:length(idx)-1
-                        PSD_Aligned{tn,e} = A(:,:,idx(e)-10:idx(e+1) - 10);
+                    idx = [idx , idx(end) + 2]; % take the last event with 300 ms after the last press
+                    for e = 1:length(idx)
+                        PSD_Aligned{tn,e} = A(:,:,idx(e)-5:idx(e)+2);
                     end
                 else
                     PSD_Aligned(tn,:) = PSD_Aligned(1,:);
@@ -728,8 +737,8 @@ switch what
                     % the normalized event markers in trial tn
                     idx = E1.NEM{1}(sn , 1:D.seqlength(tn)+1);
                     idx = [idx , idx(end) + 10]; % take the last event with 300 ms after the last press
-                    for e = 1:length(idx)-1
-                        PSD_Aligned{tn,e} = A(:,:,idx(e)-5:idx(e+1) - 5);
+                    for e = 1:length(idx)
+                        PSD_Aligned{tn,e} = A(:,:,idx(e)-5:idx(e)+2);
                     end
                 else
                     PSD_Aligned(tn,:) = PSD_Aligned(1,:);

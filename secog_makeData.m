@@ -3,7 +3,7 @@ function secog_makeData(subjNum , chans)
   % Provide subject number
   % Provide channels of interest
 %%
-subjname = {'P2' , 'P4'};
+subjname = {'P2' , 'P4' , 'P5'};
 Dall = secog_analyze ('sing_subj' , 'subjCode' , subjname{subjNum});
 mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} ,'/'];
 save([mainDir , 'AllData_Behav.mat'] , 'Dall')

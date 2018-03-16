@@ -6,11 +6,11 @@ chans = [15:21 93:99 101:110 112 28];
 secog_makeData(subjNum , chans)
 
 %% Visualize Behavior
-subjNum = 2;
+subjNum = 3;
 % Good Channels for P4
-chans = [15:21 93:99 101:110 112 28];
+% chans = [15:21 93:99 101:110 112 28];
 
-cd('/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/P4')
+cd('/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/P5')
 load('AllData_Behav.mat')
 
 load('AllData_Events.mat')

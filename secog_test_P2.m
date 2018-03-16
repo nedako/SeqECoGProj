@@ -1,9 +1,9 @@
 %% Make all the data structures
-subjNum = 1;
-
-% Good Channels for P2
-chans = [4:12 ,14, 122:129 ,36] ;
-secog_makeData(subjNum , chans)
+% % subjNum = 1;
+% % 
+% % % Good Channels for P2
+% % chans = [4:12 ,14, 122:129 ,36] ;
+% % secog_makeData(subjNum , chans)
 
 %% Visualize Behavior
 subjNum = 1;

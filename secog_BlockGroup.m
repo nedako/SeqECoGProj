@@ -9,8 +9,7 @@ NumWarpSampSlow = 500;
 TimeDelay = 0.5; % sec
 FreqRange = [2 180];
 numFreqBins = 90;
-Channels = [1:129];
-subjname = {'P2', 'P4'};
+subjname = {'P2', 'P4' , 'P5'};
 c = 1;
 while(c<=length(varargin))
     switch(varargin{c})

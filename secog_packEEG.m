@@ -12,12 +12,12 @@ while(c<=length(varargin))
     end
 end
 
-subjname = {'P2' , 'P4'};
+subjname = {'P2' , 'P4' , 'P5'};
 saveDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} , '/Packed/'] ;
 mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} , '/'] ;
 cd(mainDir)
 %% Import PathInfo
-[~, ~, PathInfo] = xlsread('/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/P4/PathInfo.xlsx','Sheet1');
+[~, ~, PathInfo] = xlsread(['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' ,subjname{subjNum} ,'/PathInfo.xlsx'],'Sheet1');
 PathInfo(cellfun(@(x) ~isempty(x) && isnumeric(x) && isnan(x),PathInfo)) = {''};
 
 idx = cellfun(@ischar, PathInfo);
@@ -28,7 +28,7 @@ clearvars idx;
 %% chop up the EEG data into trials, and filter out the power line noise
 switch what
     case 'PackEEG'
-        for p = 2:size(PathInfo , 1)
+        for p = 1:size(PathInfo , 1)
             Data = [];
             cd([mainDir ,char(PathInfo{p , 1})])
             allInfo = whos('-file' ,  char(PathInfo{p,2}));

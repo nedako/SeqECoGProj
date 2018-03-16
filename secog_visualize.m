@@ -11,7 +11,7 @@ function out  = secog_visualize(Dall , subjnum, what,rep)
 baseDir = '/Users/nkordjazi/Documents/SeqECoG/analyze';
 % baseDir = '/Users/nkordjazi/Documents/SeqEye/se1/SeqEye1/se1_data/analyze';
 % subj_name = {'XW' , 'ML' , 'DS' , 'BM' , 'HK' , 'BW' 'XX'};
-subj_name = {'P2', 'P4' , 'XX'};
+subj_name = {'P2', 'P4' , 'P5' , 'XX'};
 if subjnum == length(subj_name)
     subjnum = 1:length(subj_name)-1;
 end
@@ -62,23 +62,23 @@ switch what
         out.IPI_all = anovan(IPI.ipi , [IPI.seqT , IPI.day],'varnames',{'Random/Chunked' , 'day'} , 'display' , 'on' , 'model' , 'full');
 
         h1 = figure('color' , 'white');
-        [xb,ePLOTb,ERRORb] = lineplot(IPI.day , IPI.ipi , 'subset' , IPI.ipiArr == 1);
+        [xb,ePLOTb,ERRORb] = lineplot(IPI.day , IPI.ipi , 'plotfcn' , 'nanmedian' ,'subset' , IPI.ipiArr == 1);
         hold on
-        [xw,ePLOTw,ERRORw] = lineplot(IPI.day , IPI.ipi , 'subset' , IPI.ipiArr == 2);
-        [xr,ePLOTr,ERRORr] = lineplot(IPI.day , IPI.ipi , 'subset' , IPI.ipiArr == 0);
+        [xw,ePLOTw,ERRORw] = lineplot(IPI.day , IPI.ipi , 'plotfcn' , 'nanmedian' ,'subset' , IPI.ipiArr == 2);
+        [xr,ePLOTr,ERRORr] = lineplot(IPI.day , IPI.ipi , 'plotfcn' , 'nanmedian' ,'subset' , IPI.ipiArr == 0);
         dayss = unique(IPI.day);
         for d = 1:length(dayss)
             IPIs = getrow(IPI , IPI.seqN > 0 & IPI.day == dayss(d));
             out.IPId{d} = anovan(IPIs.ipi , IPIs.ipiArr,'varnames',{'Within/Between'} , 'display' , 'off' , 'model' , 'full');
             % for strucutre one
-            [xs1{d},PLOTs1{d},ERRORs1{d}] = lineplot(IPI.ipiNum,IPI.ipi , 'subset' , IPI.day == dayss(d) & IPI.seqN == 1);
+            [xs1{d},PLOTs1{d},ERRORs1{d}] = lineplot(IPI.ipiNum,IPI.ipi , 'plotfcn' , 'nanmedian' ,'subset' , IPI.day == dayss(d) & IPI.seqN == 1);
             hold on
             
             % for strucutre two
-            [xs2{d},PLOTs2{d},ERRORs2{d}] = lineplot(IPI.ipiNum,IPI.ipi , 'subset' , IPI.day == dayss(d) & IPI.seqN == 3);
+            [xs2{d},PLOTs2{d},ERRORs2{d}] = lineplot(IPI.ipiNum,IPI.ipi , 'plotfcn' , 'nanmedian' ,'subset' , IPI.day == dayss(d) & IPI.seqN == 3);
             
             % for random
-            [xra{d},PLOTra{d},ERRORra{d}] = lineplot(IPI.ipiNum,IPI.ipi , 'subset' , IPI.day == dayss(d) & IPI.seqT == 0);
+            [xra{d},PLOTra{d},ERRORra{d}] = lineplot(IPI.ipiNum,IPI.ipi , 'plotfcn' , 'nanmedian' ,'subset' , IPI.day == dayss(d) & IPI.seqT == 0);
         end
         close(h1);
         
@@ -113,9 +113,9 @@ switch what
         %         out.MT = anovaMixed([ANA1.MT ; ANA0.MT] , [ANA1.SN ;ANA0.SN],'within',[0*ANA1.MT ; 1+0*ANA0.MT],{'Random/Chunked'},'intercept',1)  ;
         out.MT = anovan(ANA.MT, ANA.seqNumb , 'display' , 'off' , 'varnames' , 'Rand/Chunked');
         h1 = figure('color' , 'white');
-        [xs,PLOTs,ERRORs] = lineplot(ANA.Day,ANA.MT , 'subset' , ANA.seqType == 1);
+        [xs,PLOTs,ERRORs] = lineplot(ANA.Day,ANA.MT , 'plotfcn' , 'nanmedian' ,'subset' , ANA.seqType == 1);
         hold on
-        [xr,PLOTr,ERRORr] = lineplot(ANA.Day,ANA.MT, 'subset' , ANA.seqType == 0);
+        [xr,PLOTr,ERRORr] = lineplot(ANA.Day,ANA.MT, 'plotfcn' , 'nanmedian' ,'subset' , ANA.seqType == 0);
         close(h1);
         
         figure('color' , 'white')
@@ -164,11 +164,11 @@ switch what
         out.IPI = anovan([IPI3.ipi ; IPI4.ipi] , [[0*IPI3.ipi; 1+0*IPI4.ipi] , [IPI3.day; IPI4.day]],'varnames',{'Quadruple IPI/Triplet IPI' , 'day'} , 'display' , 'on' , 'model' , 'full');
         h1 = figure('color' , 'white');
         hold on
-        [x3,ePLOT3,ERROR3] = lineplot( IPI3.day, IPI3.ipi);
-        [x4,ePLOT4,ERROR4] = lineplot(IPI4.day , IPI4.ipi);
+        [x3,ePLOT3,ERROR3] = lineplot( IPI3.day, IPI3.ipi,'plotfcn' , 'nanmedian');
+        [x4,ePLOT4,ERROR4] = lineplot(IPI4.day , IPI4.ipi,'plotfcn' , 'nanmedian');
         
-        [x3_2,ePLOT3_2,ERROR3_2] = lineplot( IPI3.ipiNum, IPI3.ipi);
-        [x4_2,ePLOT4_2,ERROR4_2] = lineplot(IPI4.ipiNum , IPI4.ipi);
+        [x3_2,ePLOT3_2,ERROR3_2] = lineplot( IPI3.ipiNum, IPI3.ipi,'plotfcn' , 'nanmedian');
+        [x4_2,ePLOT4_2,ERROR4_2] = lineplot(IPI4.ipiNum , IPI4.ipi,'plotfcn' , 'nanmedian');
         close(h1);
         
         figure('color' , 'white')
@@ -231,9 +231,9 @@ switch what
         %         out.RT = anovaMixed([ANA1.RT ; ANA0.RT] , [ANA1.SN ;ANA0.SN],'within',[0*ANA1.RT ; 1+0*ANA0.RT],{'Random/Chunked'},'intercept',1)  ;
         out.RT = anovan([ANA1.RT ; ANA0.RT] , [[0*ANA1.RT ; 1+0*ANA0.RT] [ANA1.Day ; ANA0.Day]] , 'display' , 'on' , 'varnames' , {'Rand/Chunked' , 'Day'} , 'model' , 'full');
         h1 = figure('color' , 'white');
-        [xs,PLOTs,ERRORs] = lineplot(ANA1.Day,ANA1.RT);
+        [xs,PLOTs,ERRORs] = lineplot(ANA1.Day,ANA1.RT,'plotfcn' , 'nanmedian');
         hold on
-        [xr,PLOTr,ERRORr] = lineplot(ANA0.Day,ANA0.RT);
+        [xr,PLOTr,ERRORr] = lineplot(ANA0.Day,ANA0.RT,'plotfcn' , 'nanmedian');
         close(h1);
         
         figure('color' , 'white')
@@ -265,9 +265,9 @@ switch what
 
         out.RT = anovan([ANA1.RT ; ANA0.RT] , [[0*ANA1.RT ; 1+0*ANA0.RT] [ANA1.Day ; ANA0.Day]]  , 'display' , 'on' , 'varnames' , {'Quadruple/Trilet' , 'Day'} , 'model' , 'full');
         h1 = figure('color' , 'white');
-        [xs,PLOTs,ERRORs] = lineplot(ANA1.Day,ANA1.RT);
+        [xs,PLOTs,ERRORs] = lineplot(ANA1.Day,ANA1.RT,'plotfcn' , 'nanmedian');
         hold on
-        [xr,PLOTr,ERRORr] = lineplot(ANA0.Day,ANA0.RT);
+        [xr,PLOTr,ERRORr] = lineplot(ANA0.Day,ANA0.RT,'plotfcn' , 'nanmedian');
         close(h1);
         
         figure('color' , 'white')
@@ -291,7 +291,7 @@ switch what
         ANA.RT = ANA.AllPressTimes(:,1);
         out.RT = anovan([ANA.RT] ,[ANA.Day ANA.seqNumb] , 'display' , 'on' , 'model' , 'full','varnames' , {'Day', 'Single Finger Sequences'});
         figure('color' , 'white')
-        [xs,PLOTs,ERRORs] = lineplot([ANA.Day ANA.seqNumb],ANA.RT , 'style_shade');
+        [xs,PLOTs,ERRORs] = lineplot([ANA.Day ANA.seqNumb],ANA.RT , 'style_shade','plotfcn' , 'nanmedian');
         title(['Reaction Time'])
         ylabel('msec')
         xlabel('Training Days')
@@ -310,7 +310,7 @@ switch what
         %         out.MT = anovaMixed([ANA1.MT ; ANA0.MT] , [ANA1.SN ;ANA0.SN],'within',[0*ANA1.MT ; 1+0*ANA0.MT],{'Random/Chunked'},'intercept',1)  ;
         out.MT = anovan([ANA.MT] , ANA.seqNumb , 'display' , 'on');
         h1 = figure('color' , 'white');
-        [xs,PLOTs,ERRORs] = lineplot(ANA.BN,ANA.MT);
+        [xs,PLOTs,ERRORs] = lineplot(ANA.BN,ANA.MT,'plotfcn' , 'nanmedian');
         hold on
         close(h1);
         
