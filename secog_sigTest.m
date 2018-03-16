@@ -911,6 +911,116 @@ switch what
                 lineplot([A.blockGroup] , A.avgPSD)
             end
         end
+    case 'SeqFingRepetition'
+        allSubj_BlockGroup(1).bg = {'Intermixed1','Intermixed5','Intermixed8','Intermixed9'};
+        allSubj_BlockGroup(2).bg = {'Intermixed1','Intermixed4','Intermixed7'};
+        allSubj_BlockGroup(3).bg = {'Intermixed1','Intermixed4','Intermixed6','Intermixed8'};
+        BlockGroup = allSubj_BlockGroup(subjNum).bg;
+        D = [];
+        D.data = [];
+        D.blockgroup = [];
+        D.frequency = [];
+        D.seqNumb = [];
+        D.changroup = [];
+        D.chanNumb = [];
+        D. TN = [];
+        
+        for bg = 1:length(BlockGroup)
+            load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
+            BG(bg) = find(strcmp(E.blockGroupNames , BlockGroup{bg}));
+            E = getrow(E , BG(bg));
+            if isempty(E.EM)
+                error('Nothing to plot!')
+            end
+            filename = [mainDir ,  'PowerSpectrum_SeqType' , num2str(BG(bg)),'.mat'];
+            load(filename)
+            
+            chanGroup = {Chan};
+            %             fig = figure;
+            for sn = 1:length(Pall.PowTR)
+                Tr = Pall.PowTR{sn};
+                
+                Bl = Pall.PowBL{sn};
+                
+                for cg = 1:length(chanGroup)
+                    Tcg = Tr(:,chanGroup{cg} , :);
+                    Bcg = Bl(:,chanGroup{cg} , :);
+                    diff  = Tcg - Bcg;
+                    
+                    for tr = 1:size(diff , 1)
+                        temp = squeeze(diff(tr , :,:));
+                        data  = reshape(temp' , numel(temp),1);
+                        D.data = [D.data ; data];
+                        D.changroup  = [D.changroup; cg*ones(size(data))];
+                        for ch = 1:length(chanGroup{1})
+                            D.chanNumb = [D.chanNumb ;ch*ones(length(frex) ,1)];
+                            D.frequency  = [D.frequency; frex'];
+                        end
+                        D.seqNumb    = [D.seqNumb; Pall.SN{1}(sn)*ones(size(data))];
+                        D.blockgroup = [D.blockgroup; bg*ones(size(data))];
+                        D.TN         = [D.TN ; tr*ones(length(data),1)];
+                    end
+                end
+            end
+            %             close(fig)
+        end
+        D.band = zeros(size(D.frequency));
+        for b = 1:length(BandInfo.bands)
+            ind = ismember(D.frequency , [BandInfo.bands{b}(1) : BandInfo.bands{b}(2)]);
+            D.band(ind) = b;
+        end
+        %% prepare data for testing Block Groups against eachother
+        
+        
+
+        % applyBanding
+%         T = tapply(D , {'changroup','blockgroup','seqNumb','TN','band' },{'data'} );
+        T = D;
+        SN = length(Pall.PowTR);
+        figure('color' , 'white')
+        subplot(311)
+        
+        lineplot([D.seqNumb D.blockgroup] , D.data , 'subset' , ismember(T.band, 6) , 'style_thickline' , 'subset' , D.seqNumb == 20 , 'linecolor' , colorz{1} , 'errorcolor' , colorz{1})
+        hold on
+        lineplot([D.seqNumb D.blockgroup] , D.data , 'subset' , ismember(T.band, 6) , 'style_thickline' , 'subset' , D.seqNumb == 30 , 'linecolor' , colorz{2} , 'errorcolor' , colorz{2})
+        set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , SN))
+        title('High Gamma Band Power Across days for Random, Structured and Null Trails respectively left to right')
+        grid on
+        
+        subplot(312)
+        lineplot([D.seqNumb T.blockgroup] , D.data , 'subset' , ismember(D.band, 5) , 'style_thickline','subset' , D.seqNumb == 20)% , 'linecolor' , colorz{1} , 'errorcolor' , colorz{1})
+        hold on
+        lineplot([D.seqNumb D.blockgroup] , D.data , 'subset' , ismember(T.band, 5) , 'style_thickline','subset' , D.seqNumb == 30 , 'linecolor' , colorz{2} , 'errorcolor' , colorz{2})
+        set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , SN))
+        title('Low Gamma Band Power Across days for Random, Structured and Null Trails respectively left to right')
+        grid on
+        
+        subplot(313)
+        lineplot([T.seqNumb T.blockgroup] , T.data , 'subset' , ismember(T.band, 4) , 'style_thickline','subset' ,D.seqNumb == 20 , 'linecolor' , colorz{1} , 'errorcolor' , colorz{1})
+        hold on
+        lineplot([T.seqNumb T.blockgroup] , T.data , 'subset' , ismember(T.band, 4) , 'style_thickline','subset' ,D.seqNumb == 30 , 'linecolor' , colorz{2} , 'errorcolor' , colorz{2})
+        set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , SN))
+        title('Beta Band Power Across days for Random, Structured and Null Trails respectively left to right')
+        grid on
+        
+       
+        disp('***********************************************************************************')
+        disp('****************************** CHOSE THE TEST TO RUN ******************************')
+        disp('***********************************************************************************')
+        keyboard
+        
+        %% significance tests
+        %% testing the effect of sequence type and days on high gamma
+        bandnumb = 6;
+        seqNumb = [30 20];
+        A = getrow(D , ismember(D.band, bandnumb)  & ismember(D.seqNumb , seqNumb ));
+        %         D.blockGroup(D.blockGroup>1) = 0;     % test day one vs all other days
+        if length(seqNumb)>1
+            [p,tbl,stats] =  anovan(A.data , [A.blockgroup A.seqNumb],'model','interaction','varnames',{'Days' , 'Sequence Type'});
+        else
+            [p,tbl,stats] =  anovan(A.data , [A.blockgroup],'model','interaction','varnames',{'Days'});
+        end
+        close all
 end
 
 

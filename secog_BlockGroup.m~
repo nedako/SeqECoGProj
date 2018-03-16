@@ -93,7 +93,7 @@ switch what
         Pall.Fast(ismember(Pall.BN , fastBlock)) = 1;
         clear Dall
         for BG = 1:length(blockGroups)
-            clear tempPow binnedPow tcount F Rep
+            clear tempPow binnedPow tcount F
             saveName = [mainDir,'AverageBinnedPSD',num2str(BG) , '.mat'];
             E1 = getrow(E ,  BG);
             if ~isempty(E1.SN{1})
@@ -111,15 +111,16 @@ switch what
                             tcount = tcount +1;
                         end
                     end
-                    binnedPow{sn,1} = tempPow;
-                    Rep{sn,1}       = Rep;
+                    binnedPow{sn} = tempPow;
+                    Rep{sn}       = Rep;
                     clear tempPow
                 end
             else
                 binnedPow = [];
                 Rep = [];
             end
-            save(saveName , '-struct','binnedPow','Rep');
+            save(saveName , 'binnedPow');
+            save(saveName , '-struct','binnedPow','Rep', '-v7.3');
         end
     case 'raw_BlockGroup'
         % Pall needs to be the structure containing time normalized, average
@@ -146,7 +147,7 @@ switch what
                     end
                     P = addstruct(P,Pall);
                 end
-                clear tempPow rawPow tcount F Rep
+                clear tempPow rawPow tcount F
                 for sn = 1:length(E1.SN{1})
                     %             NEM = E.NEM{1}(sn , :);
                     id = ismember(P.BN , E1.blockGroups{1}) & ismember(P.seqNumb , E1.SN{1}(sn));
@@ -160,16 +161,13 @@ switch what
                             tcount = tcount +1;
                         end
                     end
-                    rawPow{sn,1} = tempPow;
-                    Rep{sn , 1}  = Rep;
-                    clear tempPow Rep
+                    rawPow{sn,1} = squeeze(nanmean(tempPow , 1));
+                    clear tempPow
                 end
             else
                 rawPow  = [];
-                Rep = [];
             end
             E1.rawPow = rawPow;
-            E1.Rep    = Rep;
             Pall = E1;
             save(saveName , 'Pall');
         end
@@ -220,12 +218,11 @@ switch what
                     for tn = 1:length(F.PSD_stim)
                         if isequal(size(F.PSD_stim{tn}) ,[length(ChanLabels) , numFreqBins , E1.NumWarpSamp])
                             tempPow(tcount , :,:,:) = F.PSD_stim{tn};
-                            Rep(tcount , 1) = F.Rep(tn);
                             tcount = tcount +1;
                         end
                     end
                     AvgPow{sn,1} = squeeze(nanmean(tempPow , 1));
-                    clear tempPow Rep
+                    clear tempPow
                 end
             else
                 AvgPow = [];
@@ -254,7 +251,7 @@ switch what
         Pall.Fast(ismember(Pall.BN , fastBlock)) = 1;
         clear Dall
         for BG = 1:length(blockGroups)
-            clear tempPow AvgPow tcount F Rep
+            clear tempPow AvgPow tcount F
             saveName = [mainDir,'AverageBinnedPSD_SeqType',num2str(BG) , '.mat'];
             E1 = getrow(E ,  BG);
             if length(E1.SN{1})>0

@@ -14,7 +14,7 @@ function secog_visualizePSD(Pall , subjNum, what,varargin)
 %      'raw_BlockGroup_AvgChann'
 
 %% set defaults and deal with varargin
-subjname = {'P2' , 'P4'};
+subjname = {'P2' , 'P4' , 'P5'};
 mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} ,'/'];
 NumWarpSampFast = 200;
 NumWarpSampSlow = 500;
