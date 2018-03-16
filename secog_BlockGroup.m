@@ -208,7 +208,7 @@ switch what
                     P = addstruct(P,Pall);
                 end
                 
-                clear tempPow AvgPow tcount F
+                clear tempPow AvgPow tcount F Rep
                 
                 
                 for sn = 1:length(E1.SN{1})
@@ -225,12 +225,15 @@ switch what
                         end
                     end
                     AvgPow{sn,1} = squeeze(nanmean(tempPow , 1));
+                    Rep{sn,1}    = Rep;
                     clear tempPow Rep
                 end
             else
                 AvgPow = [];
+                Rep = [];
             end
             E1.AvgPow = AvgPow;
+            E1.Rep    = Rep;
             Pall = E1;
             save(saveName , 'Pall');
         end
@@ -254,7 +257,7 @@ switch what
         Pall.Fast(ismember(Pall.BN , fastBlock)) = 1;
         clear Dall
         for BG = 1:length(blockGroups)
-            clear tempPow AvgPow tcount F Rep
+            clear tempPow binnedPow tcount F Rep
             saveName = [mainDir,'AverageBinnedPSD_SeqType',num2str(BG) , '.mat'];
             E1 = getrow(E ,  BG);
             if length(E1.SN{1})>0
@@ -268,16 +271,17 @@ switch what
                     for tn = 1:length(F.Pow_Norm_stim)
                         if isequal(size(F.Pow_Norm_stim{tn}) ,[length(ChanLabels) , length(BandInfo.bandsLab) , E1.NumWarpSamp])
                             tempPow(tcount , :,:,:) = F.Pow_Norm_stim{tn};
+                            Rep(tcount , 1) = 
                             tcount = tcount +1;
                         end
                     end
-                    AvgPow{sn} = squeeze(nanmean(tempPow , 1));
+                    binnedPow{sn} = tempPow;
                     clear tempPow
                 end
             else
-                AvgPow = [];
+                binnedPow = [];
             end
-            save(saveName , 'AvgPow');
+            save(saveName , '-struct','binnedPow','Rep');
         end
     case 'raw_AvgPower_BlockGroup'
         % Pall needs to be the structure containing time normalized, average
