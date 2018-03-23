@@ -16,11 +16,9 @@ function stats  = secog_sigTest(what ,subjNum,varargin)
 %% set defaults and deal with varargin
 
 
-subjname = {'P2' , 'P4'};
+subjname = {'P2' , 'P4' , 'P5'};
 mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} , '/'] ;
 DownsampleRate = 10;
-NumWarpSampFast = 200;
-NumWarpSampSlow = 500;
 FreqRange = [2 180];
 numFreqBins = 90;
 load([mainDir , 'ChanLabels.mat']);
@@ -150,38 +148,47 @@ switch what
             ind = ismember(D.frequency , [BandInfo.bands{b}(1) : BandInfo.bands{b}(2)]);
             D.band(ind) = b;
         end
+        T = D;
         %% prepare data for testing Block Groups against eachother
         
         
 
         % applyBanding
 %         T = tapply(D , {'changroup','blockgroup','seqNumb','TN','band' },{'data'} );
-        T = D;
+        
+        D = getrow(T , ~ismember(T.seqNumb,100));
+        
         SN = length(Pall.PowTR);
         figure('color' , 'white')
-        subplot(311)
         
-        lineplot([D.seqNumb D.blockgroup] , D.data , 'subset' , ismember(T.band, 6) , 'style_thickline' , 'subset' , D.seqNumb == 20 , 'linecolor' , colorz{1} , 'errorcolor' , colorz{1})
+        subplot(311)
+        D1 = getrow(D, D.seqNumb == 20 & ismember(D.band, 6));
+        lineplot([D1.seqNumb D1.blockgroup] , D1.data , 'style_thickline' , 'linecolor' , colorz{1} , 'errorcolor' , colorz{1})
         hold on
-        lineplot([D.seqNumb D.blockgroup] , D.data , 'subset' , ismember(T.band, 6) , 'style_thickline' , 'subset' , D.seqNumb == 30 , 'linecolor' , colorz{2} , 'errorcolor' , colorz{2})
+        D1 = getrow(D, D.seqNumb == 30 & ismember(D.band, 6));
+        lineplot([D1.seqNumb D1.blockgroup] , D1.data , 'style_thickline', 'linecolor' , colorz{2} , 'errorcolor' , colorz{2})
         set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , SN))
-        title('High Gamma Band Power Across days for Random, Structured and Null Trails respectively left to right')
+        title('High Gamma Band Power Across days for for Random(blue) and Structured(red)')
         grid on
         
         subplot(312)
-        lineplot([D.seqNumb T.blockgroup] , D.data , 'subset' , ismember(D.band, 5) , 'style_thickline','subset' , D.seqNumb == 20)% , 'linecolor' , colorz{1} , 'errorcolor' , colorz{1})
+        D1 = getrow(D, D.seqNumb == 20 & ismember(D.band, 5));
+        lineplot([D1.seqNumb D1.blockgroup] , D1.data , 'style_thickline','subset' , D1.seqNumb == 20)% , 'linecolor' , colorz{1} , 'errorcolor' , colorz{1})
         hold on
-        lineplot([D.seqNumb D.blockgroup] , D.data , 'subset' , ismember(T.band, 5) , 'style_thickline','subset' , D.seqNumb == 30 , 'linecolor' , colorz{2} , 'errorcolor' , colorz{2})
+        D1 = getrow(D, D.seqNumb == 30 & ismember(D.band, 5));
+        lineplot([D1.seqNumb D1.blockgroup] , D1.data , 'style_thickline','subset' , D1.seqNumb == 30 , 'linecolor' , colorz{2} , 'errorcolor' , colorz{2})
         set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , SN))
-        title('Low Gamma Band Power Across days for Random, Structured and Null Trails respectively left to right')
+        title('Low Gamma Band Power Across days for Random(blue) and Structured(red)')
         grid on
         
         subplot(313)
-        lineplot([T.seqNumb T.blockgroup] , T.data , 'subset' , ismember(T.band, 4) , 'style_thickline','subset' ,D.seqNumb == 20 , 'linecolor' , colorz{1} , 'errorcolor' , colorz{1})
+        D1 = getrow(D, D.seqNumb == 20 & ismember(D.band, 4));
+        lineplot([D1.seqNumb D1.blockgroup] , D1.data , 'style_thickline','subset' ,D1.seqNumb == 20 , 'linecolor' , colorz{1} , 'errorcolor' , colorz{1})
         hold on
-        lineplot([T.seqNumb T.blockgroup] , T.data , 'subset' , ismember(T.band, 4) , 'style_thickline','subset' ,D.seqNumb == 30 , 'linecolor' , colorz{2} , 'errorcolor' , colorz{2})
+        D1 = getrow(D, D.seqNumb == 30 & ismember(D.band, 4));
+        lineplot([D1.seqNumb D1.blockgroup] , D1.data , 'style_thickline','subset' ,D1.seqNumb == 30 , 'linecolor' , colorz{2} , 'errorcolor' , colorz{2})
         set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , SN))
-        title('Beta Band Power Across days for Random, Structured and Null Trails respectively left to right')
+        title('Beta Band Power Across days for for Random(blue) and Structured(red)')
         grid on
         
        
@@ -192,14 +199,16 @@ switch what
         
         %% significance tests
         %% testing the effect of sequence type and days on high gamma
-        bandnumb = 6;
+        bandnumb = 4;
         seqNumb = [30 20];
         A = getrow(D , ismember(D.band, bandnumb)  & ismember(D.seqNumb , seqNumb ));
         %         D.blockGroup(D.blockGroup>1) = 0;     % test day one vs all other days
         if length(seqNumb)>1
             [p,tbl,stats] =  anovan(A.data , [A.blockgroup A.seqNumb],'model','interaction','varnames',{'Days' , 'Sequence Type'});
+            figure;lineplot([A.blockgroup A.seqNumb] , A.data)
         else
             [p,tbl,stats] =  anovan(A.data , [A.blockgroup],'model','interaction','varnames',{'Days'});
+            figure;lineplot([A.blockgroup] , A.data)
         end
         close all
     case 'singleFing_across_days'
@@ -451,7 +460,9 @@ switch what
         end
         P = anovaMixed(A.data , [1:length(A.data)]','between',[A.blockgroup A.seqNumb],{'BlockGroup' , 'Sequence Type'},'intercept',1);        
     case 'Alined_Sequences'
-
+        chans{1} = [4:12 ,14, 122:129 ,36] ; % channels for patient P2
+        chans{2} = [15:21 93:99 101:110 112 28]; % channels for patient P4
+        secog_visualizePSD([],subjNum,'Aligned_seqType_average' , 'BlockGroup' , [],'Chan2Plot' , Chan,'Channels' , chans{subjNum});
 
         allSubj_BlockGroup(1).bg = {'Intermixed1','Intermixed5','Intermixed8','Intermixed9'};
         allSubj_BlockGroup(2).bg = {'Intermixed1','Intermixed4','Intermixed7'};
@@ -489,8 +500,8 @@ switch what
                 % reduce the band and channel dimensions
                 for evnt = 1:T.seqlength(1)+1
                     for tn = 1:length(T.TN)
-                        for bands = 1:size(T.PSD{tn , evnt} , 2)
-                            temp = squeeze(T.PSD{tn , evnt}(:,bands,:));
+                        for bands = 1:size(T.PSD1{tn , evnt} , 2)
+                            temp = squeeze(T.PSD1{tn , evnt}(:,bands,:));
                             eval(['T.reducPSD' , num2str(bands) , '(tn , evnt) = nanmean(nanmean(temp(Chan , :)));'])
                         end
                     end
@@ -514,7 +525,7 @@ switch what
             T.TN = [];
             T.eventNum = [];
             T.ChnkPlcmnt = [];
-            for bands = 1:size(temp.PSD{1} , 2)
+            for bands = 1:size(temp.PSD1{1} , 2)
                eval(['A = temp.reducPSD' , num2str(bands) , ';']);
                T.avgPSD = [T.avgPSD ; A'];
                T.eventNum = [T.eventNum ; [1:length(A)]'];
@@ -526,39 +537,7 @@ switch what
             end
             D = addstruct(D , T);
         end
-        %% prepare data for testing Block Groups against eachother
-        % applyBanding
-        figure('color' , 'white')
-        SN = unique(D.seqNumb);
-        subplot(311)
-        for sn = 1:length(SN)
-            T = getrow(D , D.band == 6 & D.seqNumb == SN(sn));  % high gamma
-            lineplot([T.eventNum T.blockGroup] , T.avgPSD , 'style_thickline' , 'linecolor' , colorz{sn} , 'errorcolor' , colorz{sn})
-            hold on
-        end
-        set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , max(T.eventNum)))
-        title('High Gamma Band Power Across days for Random (blue) and Structured (red/green)')
-        grid on
         
-        subplot(312)
-        for sn = 1:length(SN)
-            T = getrow(D , D.band == 5 & D.seqNumb == SN(sn));  % high gamma
-            lineplot([T.eventNum T.blockGroup] , T.avgPSD , 'style_thickline' , 'linecolor' , colorz{sn} , 'errorcolor' , colorz{sn} )
-            hold on
-        end
-        set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , max(T.eventNum)))
-        title('Low Gamma Band Power Across days for Random (blue) and Structured (red)')
-        grid on
-        
-        subplot(313)
-        for sn = 1:length(SN)
-            T = getrow(D , D.band == 4 & D.seqNumb == SN(sn));  % high gamma
-            lineplot([T.eventNum T.blockGroup] , T.avgPSD , 'style_thickline' , 'linecolor' , colorz{sn} , 'errorcolor' , colorz{sn} )
-            hold on
-        end
-        set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , max(T.eventNum)))
-        title('Beta Band Power Across days for Random (blue) and Structured (red)')
-        grid on
         disp('***********************************************************************************')
         disp('****************************** CHOSE THE TEST TO RUN ******************************')
         disp('***********************************************************************************')
@@ -834,8 +813,9 @@ switch what
         CombineSeqs = 1;     % combine all the seqNums to look at placement effect
         %______________________________________________________________ DEFINE TYPE OF TEST
         %______________________________________________________________
-        firstVsmiddleChunk = 1;     % take out the random presses and just look at the difference between within vs first
-        lastVsmiddleChunk = 0;     % take out the random presses and just look at the difference between within vs first
+        firstVsmiddleChunk = 0;     % take out the random presses and just look at the difference between within vs first
+        lastVsmiddleChunk = 0;     % take out the random presses and just look at the difference between within vs last
+        GeneralChunking  = 1;     % take out the random presses and look at the difference between within, middle and last
         RanVsSeq = 0;        % look at the difference between random vs seq
         begVsMiddle = 0;  % look at the difference beginning the seq to the middle
         EndVsMiddle = 0;  % look at the difference end the seq to the middle
@@ -860,11 +840,17 @@ switch what
             A.ChnkPlcmnt(ismember(A.ChnkPlcmnt , [2 3])) = 0;
             CofInterest = [0 1];
         end
-        if lastVsmiddleChunk
-            CofInterest =[3 2];
+        
+        if GeneralChunking
+            CofInterest =[1  2  3];
             A = getrow(C , ismember(C.band, bandnumb) & ismember(C.ChnkPlcmnt , CofInterest )  & ismember(C.seqNumb , seqNumb ) & ismember(C.blockGroup , bgofInterest ));
-            A.ChnkPlcmnt(ismember(A.ChnkPlcmnt , [1 2])) = 0;
-            CofInterest = [0 3];
+
+        end
+        if firstVsmiddleChunk
+            CofInterest =[1 2];
+            A = getrow(C , ismember(C.band, bandnumb) & ismember(C.ChnkPlcmnt , CofInterest )  & ismember(C.seqNumb , seqNumb ) & ismember(C.blockGroup , bgofInterest ));
+            A.ChnkPlcmnt(ismember(A.ChnkPlcmnt , [2 3])) = 0;
+            CofInterest = [0 1];
         end
         if begVsMiddle
             C= D;
@@ -970,9 +956,6 @@ switch what
             D.band(ind) = b;
         end
         %% prepare data for testing Block Groups against eachother
-        
-        
-
         % applyBanding
 %         T = tapply(D , {'changroup','blockgroup','seqNumb','TN','band' },{'data'} );
         T = D;
@@ -1017,6 +1000,7 @@ switch what
         %         D.blockGroup(D.blockGroup>1) = 0;     % test day one vs all other days
         if length(seqNumb)>1
             [p,tbl,stats] =  anovan(A.data , [A.blockgroup A.seqNumb],'model','interaction','varnames',{'Days' , 'Sequence Type'});
+            lineplot()
         else
             [p,tbl,stats] =  anovan(A.data , [A.blockgroup],'model','interaction','varnames',{'Days'});
         end

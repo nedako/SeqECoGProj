@@ -1,9 +1,9 @@
 %% Make all the data structures
-% % subjNum = 1;
-% % 
-% % % Good Channels for P2
-% % chans = [4:12 ,14, 122:129 ,36] ;
-% % secog_makeData(subjNum , chans)
+subjNum = 1;
+
+% Good Channels for P2
+chans = [4:12 ,14, 122:129 ,36] ;
+secog_makeData(subjNum , chans)
 
 %% Visualize Behavior
 subjNum = 1;
@@ -50,23 +50,24 @@ out  = secog_visualize(Dall , subjNum, 'MT_SF' ,[1 2]);
 
 secog_visualizePSD(Pall,subjNum,'raw_BlockGroup' , 'BlockGroup' , 'SingleFingSlow1','Chan2Plot' , CH,'Channels' , chans) 
 load('AllData_PSD_Warped.mat')
-secog_visualizePSD(Pall,subjNum,'binned_BlockGroup' , 'BlockGroup' , 'Intermixed5','Chan2Plot' , CH,'Channels' , chans); 
+secog_visualizePSD(Pall,subjNum,'raw_BlockGroup' , 'BlockGroup' , 'Intermixed1','Chan2Plot' , CH,'Channels' , chans , 'Rep2Plot' , [1]) 
+secog_visualizePSD(Pall,subjNum,'raw_BlockGroup' , 'BlockGroup' , 'SingleFingSlow','Chan2Plot' , CH,'Channels' , chans, 'Rep2Plot' , [1,2]) 
+
+secog_visualizePSD(Pall,subjNum,'binned_BlockGroup' , 'BlockGroup' , 'Intermixed7','Chan2Plot' , CH,'Channels' , chans,'separateReps',1); 
 secog_visualizePSD(Pall,subjNum,'binned_BlockGroup' , 'BlockGroup' , 'SingleFingSlow1','Chan2Plot' , CH,'Channels' , chans); 
 
-secog_visualizePSD(Pall,subjNum,'raw_BlockGroup_SeqType' , 'BlockGroup' , 'SingleFingSlow1','Chan2Plot' , CH,'Channels' , chans); 
-secog_visualizePSD(Pall,subjNum,'binned_BlockGroup_SeqType' , 'BlockGroup' , 'Intermixed5','Chan2Plot' , CH,'Channels' , chans); 
+load('AllData_PSD_Warped_SeqType.mat')
+secog_visualizePSD(Pall,subjNum,'raw_BlockGroup_SeqType' , 'BlockGroup' , 'Intermixed9','Chan2Plot' ,CH,'Channels' , chans); 
+secog_visualizePSD(Pall,subjNum,'binned_BlockGroup_SeqType' , 'BlockGroup' , 'Intermixed9','Chan2Plot' , CH,'Channels' , chans,'separateReps',1); 
 
 
 
 
 secog_visualizePSD(Pall,subjNum,'binned_BlockGroup_SeqType' , 'BlockGroup' , 'SingleFingFast1','Chan2Plot' , CH,'Channels' , chans);
-secog_visualizePSD([],subjNum,'AvgPower_SeqType' , 'BlockGroup' , 'Intermixed5','Chan2Plot' , CH,'Channels' , chans);
+secog_visualizePSD([],subjNum,'AvgPower_SeqType_Repetition' , 'BlockGroup' , {'Intermixed9'},'Chan2Plot' , CH,'Channels' , chans);
 
 secog_visualizePSD([],subjNum,'AvgPower_SeqType_comp' , 'BlockGroup' , {'Intermixed1','Intermixed5','Intermixed8','Intermixed9'},'Chan2Plot' , CH,'Channels' , chans); 
-secog_visualizePSD([],subjNum,'AvgPower_SeqType_comp' , 'BlockGroup' , {'Intermixed1','Intermixed5','Intermixed8','Intermixed9'},'Chan2Plot' , CH,'Channels' , chans);
 
-secog_visualizePSD([],subjNum,'AvgPower_SeqType_comp' , 'BlockGroup' , {'Intermixed2','Intermixed5','Intermixed8','Intermixed9'},'Chan2Plot' , CH,'Channels' , chans); 
-secog_visualizePSD([],subjNum,'AvgPower_SeqType_comp' , 'BlockGroup' , {'Intermixed2','Intermixed5','Intermixed8','Intermixed9'},'Chan2Plot' , CH,'Channels' , chans) 
 
 
 
@@ -94,7 +95,7 @@ secog_visualizePSD([],subjNum,'Aligned_SeqType' ,'BlockGroup' , {'ChunkDay1','Ch
     'Chan2Plot' , CH,'Channels' , chans , 'bandofInterest' , 6); 
 
 secog_visualizePSD([],subjNum,'ChunkAligned_SeqType' ,'BlockGroup' , {'Intermixed1','Intermixed9'},...
-    'Chan2Plot' , CH,'Channels' , chans , 'bandofInterest' , 4); 
+    'Chan2Plot' , CH,'Channels' , chans , 'bandofInterest' , 6); 
 
 
 secog_visualizePSD([],subjNum,'AlignedWarped_SeqType' ,'BlockGroup' , {'ChunkDay1','ChunkDay2','ChunkDay3'},...
@@ -105,8 +106,12 @@ secog_visualizePSD([],subjNum,'AlignedWarped_SeqType' ,'BlockGroup' , {'SingleFi
     'Chan2Plot' ,CH,'Channels' , chans , 'bandofInterest' , 6); 
 secog_visualizePSD([],subjNum,'AlignedWarped_SeqType' ,'BlockGroup' , {'Intermixed2','Intermixed5','Intermixed8','Intermixed9'},...
     'Chan2Plot' ,CH,'Channels' , chans , 'bandofInterest' , 6);
+secog_visualizePSD([],subjNum,'AlignedWarped_SeqType' ,'BlockGroup' , {'Intermixed2','Intermixed5','Intermixed8','Intermixed9'},...
+    'Chan2Plot' ,CH,'Channels' , chans , 'bandofInterest' , 6);
 
 
+
+secog_visualizePSD([],subjNum,'plot_Blocks' , 'Chan2Plot' ,CH,'Channels' , chans );
 
 secog_visualizePSD(Pall,subjNum,'raw_SingleTrial' , 'TBNum', [10 1], 'Chan2Plot' , CH,'Channels' , chans)
 

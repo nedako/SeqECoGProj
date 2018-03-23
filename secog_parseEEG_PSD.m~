@@ -622,7 +622,7 @@ switch what
         BN = unique(Events.BN);
         
         Pall_binned = [];
-        for bn = 1:length(BN)
+        for bn = 47:length(BN)
             bg = 1;
             mem = 0;
             while mem == 0
@@ -667,12 +667,11 @@ switch what
                     % before the first press
                     PSD_betweenEvnt{tn,1} = A(:,:,idx(1)-10:idx(1)-5); % prior to the first press
                     for evnt = 1:length(idx)
-                        [tn evnt]
                         % around press time
                         PSD_Aligned{tn,evnt} = A(:,:,idx(evnt)-5:idx(evnt)+2);
                         % between presses
                         if evnt<length(idx)
-                            pressmidPoint = floor(idx(evnt+1) - idx(evnt)/2);
+                            pressmidPoint = floor(idx(evnt+1) - idx(evnt))/2;
                             PSD_betweenEvnt{tn,evnt+1} = A(:,:,pressmidPoint-3:pressmidPoint+3);
                         end
                     end

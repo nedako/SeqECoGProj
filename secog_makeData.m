@@ -4,29 +4,29 @@ function secog_makeData(subjNum , chans)
   % Provide channels of interest
 %%
 subjname = {'P2' , 'P4' , 'P5'};
-Dall = secog_analyze ('sing_subj' , 'subjCode' , subjname{subjNum});
 mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} ,'/'];
-save([mainDir , 'AllData_Behav.mat'] , 'Dall')
 
+% Dall = secog_analyze ('sing_subj' , 'subjCode' , subjname{subjNum});
+% save([mainDir , 'AllData_Behav.mat'] , 'Dall')
 
 %% Pack EEG
-secog_packEEG('PackEEG' , subjNum);
+% secog_packEEG('PackEEG' , subjNum);
 %% Calculate the PSDs
-cd(['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' , subjname{subjNum}]);
-load('AllData_Behav.mat')
-load('AllData_Events.mat')
-Dout  = secog_parseEEG_PSD('ParseEEG-freqDecomp' , Dall, subjNum , 'Channels' , chans);
-Dout  = secog_parseEEG_PSD('ParseEEG-calc_norm_PSD' , Dall, subjNum , 'Channels' , chans);
+% cd(['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' , subjname{subjNum}]);
+load([mainDir,'AllData_Behav.mat'])
+
+% Dout  = secog_parseEEG_PSD('ParseEEG-freqDecomp' , Dall, subjNum , 'Channels' , chans);
+% Dout  = secog_parseEEG_PSD('ParseEEG-calc_norm_PSD' , Dall, subjNum , 'Channels' , chans);
+load([mainDir,'AllData_Events.mat'])
 % time warp
-Dout  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned' , Events, subjNum);
-Dout  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Events, subjNum);
+% Dout  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned' , Events, subjNum);
+% Dout  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Events, subjNum);
 Dout  = secog_parseEEG_PSD('AlignEvents_SeqType' , Events, subjNum);
 Dout  = secog_parseEEG_PSD('AlignEvents_SeqType_Warped' , Events, subjNum);
 
-cd(['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' , subjname{subjNum}]);
-load('AllData_PSD_Warped.mat')
-secog_BlockGroup(Pall,subjNum,'raw_BlockGroup', 'Channels' , chans)
+
 %% average pattern calculation
+cd(['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' , subjname{subjNum}]);
 load('AllData_PSD_Warped.mat')
 secog_BlockGroup(Pall,subjNum,'binned_BlockGroup', 'Channels' , chans)
 secog_BlockGroup(Pall,subjNum,'raw_BlockGroup', 'Channels' , chans)

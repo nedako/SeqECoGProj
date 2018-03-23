@@ -2,12 +2,12 @@ function Dout  = secog_addEventMarker(Dall, subjNum, Fs , what,varargin)
 % adds event markers for the EEG / PSD data pased on press times and the sampling frequency
 % make sure to account for downsampling in Fs
 
-subjname = {'P2' , 'P4'};
+subjname = {'P2' , 'P4','P5'};
 mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} ,'/'];
 load([mainDir , 'ChanLabels.mat'])
 c= 1;
-NumWarpSampFast = 200;
-NumWarpSampSlow = 500;
+NumWarpSampFast = 150;
+NumWarpSampSlow = 300;
 TimeDelay = 0.5; % sec
 while(c<=length(varargin))
     switch(varargin{c})
@@ -30,19 +30,23 @@ while(c<=length(varargin))
 end
 % block groupings for subject 1
 BG(1).blockGroups =  {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:7] , [9:11] , [8 12] , [15:17] , [19:21] , [23:25],...
-    [18 22] , [28:30] , [32:34] , [36:38], [31 35 39],[42:44]}';
+    [18 22] , [28:30] , [32:34] , [36:38], [31 35 39],[42:44],[],[]}';
 % block groupings for subject 2
 BG(2).blockGroups = {[ ] , [2 8], [14 20 26], [29 38], [], [1 7],[13 19 25], [28 37], [] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
-    [18 24] , [30:32] , [34:36] , [], [27 33],[]}';
+    [18 24] , [30:32] , [34:36] , [], [27 33],[],[],[]}';
+% block groupings for subject 3
+BG(3).blockGroups = {[ ] , [1 7], [13 19], [25 31], [37 43], [2 8],[14 20], [26 32], [38 44] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
+    [18 24] , [27:29] , [33:35] , [], [30 36],[39:41] , [45:47] [42 48]}';
 
+% define block types
 Dout.blockGroups = BG(subjNum).blockGroups;
-Dout.blockGroupNames = {'SingleFingNat' , 'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4',...
+blockGroupNames = {'SingleFingNat' , 'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4',...
     'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' , 'Intermixed1' , 'Intermixed2' , ...
     'ChunkDay1' , 'Intermixed3' , 'Intermixed4' , 'Intermixed5', 'ChunkDay2' , 'Intermixed6' , ...
-    'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9'}';
+    'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9','Intermixed10','ChunkDay4'}';
+fastBlock = horzcat(Dout.blockGroups{1} ,Dout.blockGroups{6} , Dout.blockGroups{7}, Dout.blockGroups{8}, Dout.blockGroups{9},...
+    Dout.blockGroups{12}, Dout.blockGroups{16}, Dout.blockGroups{20}, Dout.blockGroups{23});
 Dall.Fast = zeros(size(Dall.TN));
-fastBlock = horzcat(Dout.blockGroups{1} ,Dout.blockGroups{6} , Dout.blockGroups{7},Dout.blockGroups{8},Dout.blockGroups{9},...
-    Dout.blockGroups{12},Dout.blockGroups{16},Dout.blockGroups{20});
 Dall.Fast(ismember(Dall.BN , fastBlock)) = 1;
 %%  control for too short IPIs that the keys get accidentally pressed
 if subjNum==1
@@ -52,8 +56,8 @@ if subjNum==1
         end
     end
 end
-% the length of the Null trials was diferent for P2 and P4
-NullTrailTime = [15 7]; % sec
+% the length of the Null trials was diferent for P2 and the rest
+NullTrailTime = [15 7*ones(1, length(subjname)-1)]; % sec
 Dall.seqlength(Dall.seqNumb == 5) = 0;
 switch what
     case 'addEvent'

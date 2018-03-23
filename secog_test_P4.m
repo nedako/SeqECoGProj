@@ -1,10 +1,5 @@
 
-%% Make all the data structures
-subjNum = 2;
-% Good Channels for P4
-chans = [15:21 93:99 101:110 112 28];
-secog_makeData(subjNum , chans)
-
+c
 %% Visualize Behavior
 subjNum = 2;
 % Good Channels for P4
@@ -58,21 +53,21 @@ BG(2,:) = {'[]' , 'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'[
 BG = BG';
 
 
-
-secog_visualizePSD(Pall,subjNum,'raw_BlockGroup' , 'BlockGroup' , 'SingleFingSlow1','Chan2Plot' , CH,'Channels' , chans) 
-secog_visualizePSD(Pall,subjNum,'raw_BlockGroup' , 'BlockGroup' , 'SingleFingSlow','Chan2Plot' , CH,'Channels' , chans) 
 load('AllData_PSD_Warped.mat')
-secog_visualizePSD(Pall,subjNum,'binned_BlockGroup' , 'BlockGroup' , 'Intermixed7','Chan2Plot' , CH,'Channels' , chans); 
+secog_visualizePSD(Pall,subjNum,'raw_BlockGroup' , 'BlockGroup' , 'Intermixed1','Chan2Plot' , CH,'Channels' , chans , 'Rep2Plot' , [1]) 
+secog_visualizePSD(Pall,subjNum,'raw_BlockGroup' , 'BlockGroup' , 'SingleFingSlow','Chan2Plot' , CH,'Channels' , chans, 'Rep2Plot' , [1,2]) 
+
+secog_visualizePSD(Pall,subjNum,'binned_BlockGroup' , 'BlockGroup' , 'Intermixed7','Chan2Plot' , CH,'Channels' , chans,'separateReps',1); 
 secog_visualizePSD(Pall,subjNum,'binned_BlockGroup' , 'BlockGroup' , 'SingleFingSlow1','Chan2Plot' , CH,'Channels' , chans); 
 
-secog_visualizePSD(Pall,subjNum,'raw_BlockGroup_SeqType' , 'BlockGroup' , 'SingleFingSlow3','Chan2Plot' ,CH,'Channels' , chans); 
-secog_visualizePSD(Pall,subjNum,'binned_BlockGroup_SeqType' , 'BlockGroup' , 'SingleFingSlow3','Chan2Plot' , CH,'Channels' , chans); 
-
-
-
+load('AllData_PSD_Warped_SeqType.mat')
+secog_visualizePSD(Pall,subjNum,'raw_BlockGroup_SeqType' , 'BlockGroup' , 'Intermixed1','Chan2Plot' ,CH,'Channels' , chans); 
+secog_visualizePSD(Pall,subjNum,'binned_BlockGroup_SeqType' , 'BlockGroup' , 'Intermixed7','Chan2Plot' , CH,'Channels' , chans,'separateReps',1); 
 
 secog_visualizePSD(Pall,subjNum,'binned_BlockGroup_SeqType' , 'BlockGroup' , 'SingleFingFast1','Chan2Plot' , CH,'Channels' , chans); 
-secog_visualizePSD([],subjNum,'AvgPower_SeqType' , 'BlockGroup' , 'Intermixed4','Chan2Plot' ,CH,'Channels' , chans); 
+secog_visualizePSD([],subjNum,'AvgPower_SeqType_Repetition' , 'BlockGroup' , {'Intermixed1'},'Chan2Plot' ,CH,'Channels' , chans); 
+secog_visualizePSD([],subjNum,'AvgPower_SeqType_Repetition' , 'BlockGroup' , {'Intermixed5'},'Chan2Plot' ,CH,'Channels' , chans); 
+secog_visualizePSD([],subjNum,'AvgPower_SeqType_Repetition' , 'BlockGroup' , {'Intermixed7'},'Chan2Plot' ,CH,'Channels' , chans); 
 
 secog_visualizePSD([],subjNum,'AvgPower_SeqType_comp' , 'BlockGroup' , {'Intermixed1','Intermixed4','Intermixed7'},'Chan2Plot' , CH,'Channels' , chans); 
 secog_visualizePSD([],subjNum,'AvgPower_SeqType_comp' , 'BlockGroup' , {'ChunkDay1','ChunkDay2','ChunkDay3'},'Chan2Plot' , CH,'Channels' , chans); 
@@ -107,6 +102,10 @@ secog_visualizePSD([],subjNum,'AlignedWarped_SeqType' ,'BlockGroup' , {'SingleFi
     'Chan2Plot' , CH,'Channels' , chans , 'bandofInterest' , 6);
 secog_visualizePSD([],subjNum,'AlignedWarped_SeqType' ,'BlockGroup' , {'Intermixed2','Intermixed5','Intermixed8','Intermixed9'},...
     'Chan2Plot' ,CH,'Channels' , chans , 'bandofInterest' , 6);
+
+
+secog_visualizePSD([],subjNum,'plot_Blocks' , 'Chan2Plot' ,CH,'Channels' , chans );
+
 
 
 

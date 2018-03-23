@@ -1,14 +1,14 @@
 
 %% Make all the data structures
-subjNum = 2;
+subjNum = 3;
 % Good Channels for P4
-chans = [15:21 93:99 101:110 112 28];
+chans = [4 6:12 14 26:34 36:45 47 77 78 80 94:97 105:111 18];
 secog_makeData(subjNum , chans)
 
 %% Visualize Behavior
 subjNum = 3;
 % Good Channels for P4
-% chans = [15:21 93:99 101:110 112 28];
+chans = [4 6:12 14 26:34 36:45 47 77 78 80 94:97 105:111 18];
 
 cd('/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/P5')
 load('AllData_Behav.mat')
