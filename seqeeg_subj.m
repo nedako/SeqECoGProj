@@ -1,4 +1,4 @@
-function ANA=secog_subj(subjname,fig,block,trial)
+function [ANA]=seqeeg_subj(subjname,fig,block,trial)
 
 
 
@@ -38,9 +38,9 @@ for b  = 1: length(block)
     end
     
     for i=1:length(trial) % loop over all trials
-        [C]=secog_trial(MOV{D.TN(trial(i))},getrow(D,(D.BN == block(b) & D.TN == trial(i))),fig);
+        [C]=seqeeg_trial(MOV{D.TN(trial(i))},getrow(D,(D.BN == block(b) & D.TN == trial(i))),fig);
         fprintf('%d %d\n',block(b),D.TN(trial(i)));
-        ANA=addstruct(ANA,C);
+        ANA  = addstruct(ANA,C);
     end
 
     trial  = [];

@@ -1,4 +1,4 @@
-function secog_packEEG(what , subjNum, varargin)
+function seqeeg_packEEG(what , subjNum, varargin)
 
 c = 1;
 while(c<=length(varargin))

@@ -1,4 +1,4 @@
-function stats  = secog_sigTest(what ,subjNum,varargin)
+function stats  = seqeeg_sigTest(what ,subjNum,varargin)
 % for patient 2 Peter:
 %       SMA channels:     [123:126 ]
 %       preSMA channels : [128 , 129]
@@ -26,6 +26,8 @@ Channels = [1:length(ChanLabels)];
 
 daylab(1).dl = {'Day1' , 'Day2' , 'Day3' , 'Day4'};
 daylab(2).dl = {'Day1' , 'Day2' , 'Day3' };
+daylab(3).dl = {'Day1' , 'Day2' , 'Day3' , 'Day4'};
+
 
 c = 1;
 while(c<=length(varargin))
@@ -70,9 +72,9 @@ load([mainDir , 'AllData_AvgMarker.mat'])
 blockGroupNames = {'SingleFingNat' , 'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4',...
     'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' , 'Intermixed1' , 'Intermixed2' , ...
     'ChunkDay1' , 'Intermixed3' , 'Intermixed4' , 'Intermixed5', 'ChunkDay2' , 'Intermixed6' , ...
-    'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9'}';
-BandInfo.bandsLab = {'Delta <4Hz' , 'Theta 5-8Hz' , 'Alpha 9-16Hz' , 'Beta 17-36Hz' , 'L-Gamma 37-70Hz' , 'H-Gamma 70-130' , 'NoBandLand 130-180'};
-BandInfo.bands = {[0 4], [5 8] [9 16] [17 36] [37 70] [70 130] [130 180]};
+    'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9','Intermixed10','ChunkDay4'}';
+BandInfo.bandsLab = {'Delta <4Hz' , 'Theta 5-8Hz' , 'Alpha 9-16Hz' , 'Beta 17-36Hz' , 'L-Gamma 37-80Hz' , 'H-Gamma 80-100HZ' , 'HIGH 100-180HZ'};
+BandInfo.bands = {[0 4], [5 8] [9 16] [17 36] [37 80] [80 110] [100 180]};
 sequenceType.TypeNums = [100 10 20 30 40 50];
 sequenceType.Typetags = {'Null Trials' , 'Single Finger Sequences Trials' , 'Random Sequences' , 'Trained Sequences' , 'Triplet Segments' , 'Quadruple Segments'}';
 
@@ -89,11 +91,12 @@ switch what
     case 'seqs_across_days'
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
         % for this case because we are doigna comparisn, the BlockGroup is
         % a 1xN cell containnig the groups to be compared
         allSubj_BlockGroup(1).bg = {'Intermixed1','Intermixed5','Intermixed8','Intermixed9'};
         allSubj_BlockGroup(2).bg = {'Intermixed1','Intermixed4','Intermixed7'};
+        allSubj_BlockGroup(1).bg = {'Intermixed1','Intermixed4','Intermixed7','Intermixed10'};
         BlockGroup = allSubj_BlockGroup(subjNum).bg;
         D = [];
         D.data = [];
@@ -217,15 +220,17 @@ switch what
             case {'s'}
                 allSubj_BlockGroup(1).bg = {'SingleFingSlow1','SingleFingSlow2','SingleFingSlow3','SingleFingSlow4'};
                 allSubj_BlockGroup(2).bg = {'SingleFingSlow1','SingleFingSlow2','SingleFingSlow3'};
+                allSubj_BlockGroup(1).bg = {'SingleFingSlow1','SingleFingSlow2','SingleFingSlow3','SingleFingSlow4'};
                 
             case {'f'}
                 allSubj_BlockGroup(1).bg = {'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' };
-                allSubj_BlockGroup(2).bg = {'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3',};
+                allSubj_BlockGroup(2).bg = {'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3'};
+                allSubj_BlockGroup(1).bg = {'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' };
         end
         
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
         % for this case because we are doigna comparisn, the BlockGroup is
         % a 1xN cell containnig the groups to be compared
 
@@ -330,7 +335,7 @@ switch what
     case 'chunks_across_days'
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
         % for this case because we are doigna comparisn, the BlockGroup is
         % a 1xN cell containnig the groups to be compared
         allSubj_BlockGroup(1).bg = {'ChunkDay1','ChunkDay2','ChunkDay3'};
@@ -462,13 +467,14 @@ switch what
     case 'Alined_Sequences'
         chans{1} = [4:12 ,14, 122:129 ,36] ; % channels for patient P2
         chans{2} = [15:21 93:99 101:110 112 28]; % channels for patient P4
-        secog_visualizePSD([],subjNum,'Aligned_seqType_average' , 'BlockGroup' , [],'Chan2Plot' , Chan,'Channels' , chans{subjNum});
+        seqeeg_visualizePSD([],subjNum,'Aligned_seqType_average' , 'BlockGroup' , [],'Chan2Plot' , Chan,'Channels' , chans{subjNum});
 
         allSubj_BlockGroup(1).bg = {'Intermixed1','Intermixed5','Intermixed8','Intermixed9'};
         allSubj_BlockGroup(2).bg = {'Intermixed1','Intermixed4','Intermixed7'};
+        allSubj_BlockGroup(3).bg = {'Intermixed1','Intermixed4','Intermixed7','Intermixed10'};
         BlockGroup = allSubj_BlockGroup(subjNum).bg;
 
-        NT = input('Plot according to SeqNumb or SeqTyoe? (n/t)', 's');
+        NT = input('Plot according to SeqNumb or SeqType? (n/t)', 's');
         C = [];
         T = [];
 
@@ -572,13 +578,17 @@ switch what
             case {'f'}
                 allSubj_BlockGroup(1).bg = {'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4'};
                 allSubj_BlockGroup(2).bg = {'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3'};
+                allSubj_BlockGroup(3).bg = {'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4'};
             case {'s'}
                 allSubj_BlockGroup(1).bg = {'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4'};
                 allSubj_BlockGroup(2).bg = {'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3'};
+                allSubj_BlockGroup(3).bg = {'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4'};
         end
         BlockGroup = allSubj_BlockGroup(subjNum).bg;
         C = [];
         T = [];
+        whatToCompare = input('Compare around press-time or between presses?(a/b)', 's');
+
         for bg = 1:length(BlockGroup)
             load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
             
@@ -589,6 +599,12 @@ switch what
             end
             filename = [mainDir ,  'Group_Aligned_PSD' , num2str(BG(bg)),'.mat'];
             load(filename);
+            switch whatToCompare
+                case {'a'}
+                    eval('Pall.PSD = Pall.PSD1;') % around presses
+                case {'b'}
+                    eval('Pall.PSD = Pall.PSD2;') % between Presses
+            end
             Pall = getrow(Pall , Pall.seqNumb ~= 100 & ~Pall.isError);
             SN = unique(Pall.seqNumb);
             if exist('selectSN')
@@ -680,9 +696,13 @@ switch what
             end
         end
     case 'ChunkPlacement'
+        
         allSubj_BlockGroup(1).bg = {'Intermixed1','Intermixed5','Intermixed8','Intermixed9'};
         allSubj_BlockGroup(2).bg = {'Intermixed1','Intermixed4','Intermixed7'};
+        allSubj_BlockGroup(3).bg = {'Intermixed1','Intermixed4','Intermixed7','Intermixed10'};
         BlockGroup = allSubj_BlockGroup(subjNum).bg;
+        whatToCompare = input('Compare around press-time or between presses?(a/b)', 's');
+        
         NT = 'n';
         C = [];
         T = [];
@@ -695,6 +715,12 @@ switch what
             end
             filename = [mainDir ,  'Group_Aligned_PSD' , num2str(BG(bg)),'.mat'];
             load(filename);
+            switch whatToCompare
+                case {'a'}
+                    eval('Pall.PSD = Pall.PSD1;') % around presses
+                case {'b'}
+                    eval('Pall.PSD = Pall.PSD2;') % between Presses
+            end
             if strcmp(NT , 'n')
                 D = getrow(Dall , ismember(Dall.BN , unique(Pall.BN)));
                 D.seqNumb(D.seqNumb == 2) = 1; % seqNumb 1  and 2 have the same structure
@@ -898,9 +924,9 @@ switch what
             end
         end
     case 'SeqFingRepetition'
-        allSubj_BlockGroup(1).bg = {'Intermixed1','Intermixed5','Intermixed8','Intermixed9'};
-        allSubj_BlockGroup(2).bg = {'Intermixed1','Intermixed4','Intermixed7'};
-        allSubj_BlockGroup(3).bg = {'Intermixed1','Intermixed4','Intermixed6','Intermixed8'};
+        allSubj_BlockGroup(1).bg = {'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4'};
+        allSubj_BlockGroup(2).bg = {'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3'};
+        allSubj_BlockGroup(3).bg = {'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4'};
         BlockGroup = allSubj_BlockGroup(subjNum).bg;
         D = [];
         D.data = [];

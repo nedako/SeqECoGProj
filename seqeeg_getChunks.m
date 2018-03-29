@@ -1,4 +1,4 @@
-function CMB = secog_getChunks(MaxChnkLeng,NumDuo,NumTrio,NumQuadro, GenGroupCLADist)
+function CMB = seqeeg_getChunks(MaxChnkLeng,NumDuo,NumTrio,NumQuadro, GenGroupCLADist)
 % MaxChnkLeng = 4;
 % NumDuo      = 2;
 % NumTrio     = 2;

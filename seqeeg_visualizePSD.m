@@ -1,4 +1,4 @@
-function secog_visualizePSD(Pall , subjNum, what,varargin)
+function seqeeg_visualizePSD(Pall , subjNum, what,varargin)
 % for patient 2 Peter:
 %       SMA channels:     [123:126 ]
 %       preSMA channels : [128 , 129]
@@ -80,6 +80,7 @@ while(c<=length(varargin))
             % what reps do you want to plot?
             eval([varargin{c} '= varargin{c+1};']);
             c=c+2;
+        
         otherwise
             error(sprintf('Unknown option: %s',varargin{c}));
     end
@@ -109,27 +110,30 @@ load([mainDir , 'AllData_Events.mat'])
 load([mainDir , 'AllData_AvgMarker.mat'])
 %% HouseKeeping
 
-% block groupings for subject 1
+% block groupings for subjects
 BG(1).blockGroups =  {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:7] , [9:11] , [8 12] , [15:17] , [19:21] , [23:25],...
-    [18 22] , [28:30] , [32:34] , [36:38], [31 35 39],[42:44]}';
+    [18 22] , [28:30] , [32:34] , [36:38], [31 35 39],[42:44],[],[]}';
 % block groupings for subject 2
 BG(2).blockGroups = {[ ] , [2 8], [14 20 26], [29 38], [], [1 7],[13 19 25], [28 37], [] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
-    [18 24] , [30:32] , [34:36] , [], [27 33],[]}';
-
+    [18 24] , [30:32] , [34:36] , [], [27 33],[],[],[]}';
+% block groupings for subject 3
+BG(3).blockGroups = {[ ] , [1 7], [13 19], [25 31], [37 43], [2 8],[14 20], [26 32], [38 44] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
+    [18 24] , [27:29] , [33:35] , [], [30 36],[39:41] , [45:47] [42 48]}';
 
 % define block types
 blockGroups = BG(subjNum).blockGroups;
-
 blockGroupNames = {'SingleFingNat' , 'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4',...
     'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' , 'Intermixed1' , 'Intermixed2' , ...
     'ChunkDay1' , 'Intermixed3' , 'Intermixed4' , 'Intermixed5', 'ChunkDay2' , 'Intermixed6' , ...
-    'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9'}';
+    'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9','Intermixed10','ChunkDay4'}';
+fastBlock = horzcat(blockGroups{1} ,blockGroups{6} , blockGroups{7}, blockGroups{8}, blockGroups{9},...
+    blockGroups{12}, blockGroups{16}, blockGroups{20}, blockGroups{23});
 
 blockGroupTags = {'Natural Speed' , 'Slow Speed Day 1' , 'Slow Speed Day 2' ,'Slow Speed Day 3' ,'Slow Speed Day 4' ,...
     'Fast Speed Day 1' ,'Fast Speed Day 2' ,'Fast Speed Day 3' ,'Fast Speed Day 4',...
     ' Day 1' , ' Day 1' , ' Day 1' , ' Day 2' , ...
     ' Day 2' , ' Day 2' , ' Day 2' , ' Day 3' , ...
-    ' Day 3' , ' Day 3' , ' Day 3' , ' Day 4'};
+    ' Day 3' , ' Day 3' , ' Day 3' , ' Day 4', ' Day 4', ' Day 4'};
 SeqTrans = [5 11 22 33 44 55 0 1 2 3 4 103 104 203 204;...
             100 10 10 10 10 10 20 30 30 30 30 40 50 40 50];
         
@@ -146,40 +150,12 @@ BandInfo.bands = {[0 4], [5 8] [9 16] [17 36] [37 80] [80 100] [100 180]};
 colorz = {[0 0  1],[1 0 0],[0 1 0],[1 0 1],[0 1 1],[0.7 0.7 0.7],[1 1 0],[.3 .3 .3]};
 switch what
     %% PLOT average normalized binned power
-    case 'binned_SingleTrial'
-        
-        % input to this has to be AllData_PSD_StimNorm.mat
-        Pall  = secog_addEventMarker(Pall, subjNum, Fs_ds , 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
-        D = getrow(Pall , Pall.BN == TBNum(2) & Pall.TN == TBNum(1));
-        time = [1:size(D.Pow_Norm_stim{1} , 3)]/Fs_ds;
-        figure('color' , 'white')
-        Pow = real(squeeze(D.Pow_Norm_stim{1}(Chan2Plot,:,:)));
-        EM = find(D.EventMarker{1})/Fs_ds;
-        for ch = 1:length(Chan2Plot)
-            subplot(length(Chan2Plot),1, ch)
-            for b =1:length(BandInfo.bandsLab)
-                B = real(squeeze(Pow(Chan2Plot(ch) , b , :))+8*b);
-                plot(time , B , 'LineWidth' , 3)
-                hold on
-                T(b) = nanmean(B);
-            end
-            title (['Raw PSD for ',num2str(D.AllPress(1,:)) ', in Channel ' , ChanLabels{Chan2Plot(ch)}])
-            for lin = 1:length(EM)
-                line([EM(lin) EM(lin)] , [0 max(B)] , 'color' , 'red' , 'LineStyle' , ':' , 'LineWidth' , 3)
-            end
-            xlabel('Norm Time')
-            
-            set(gca , 'YTickLabels' , BandInfo.bandsLab, 'YTick' , T );
-            
-            line([median(EM) median(EM)] , [max(B)-5 max(B)],'color' , 'black' , 'LineWidth' , 5)
-            text(median(EM),max(B),'5','FontSize' , 16 )
-            set(gca ,'FontSize' , 16,'Box' , 'off')
-        end
+    
     case 'raw_SingleTrial'
         % input to this has to be AllData_PSD_StimNorm.mat
         % find the block number for that trial number to load up the
         % raw_PSD file
-        Pall  = secog_addEventMarker(Pall, subjNum, Fs_ds , 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
+        Pall  = seqeeg_addEventMarker(Pall, subjNum, Fs_ds , 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
         D = getrow(Pall , Dall.BN == TBNum(2) & Dall.TN == TBNum(1));
         filename = [mainDir ,  'Raw_PSD_B' , num2str(TBNum(2)),'.mat'];
         trialName = ['PSD',num2str(TBNum(1))];
@@ -209,10 +185,10 @@ switch what
     case 'raw_BlockGroup'
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
         E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
         BG = find(strcmp(E.blockGroupNames , BlockGroup));
-        E.NumWarpSamp([1 6 7 8 9 12 16 20]) = NumWarpSampFast;
+        E.NumWarpSamp([1 6 7 8 9 12 16 20 23]) = NumWarpSampFast;
         E = getrow(E , BG);
         if isempty(E.EM)
             error('Nothing to plot!')
@@ -250,12 +226,12 @@ switch what
     case 'binned_BlockGroup'
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
         Dall.PSD_stim = Pall.Pow_Norm_stim;
         Pall = Dall;
         Pall.Fast = zeros(size(Pall.TN));
         E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
-        E.NumWarpSamp([1 6 7 8 9 12 16 20]) = NumWarpSampFast;
+        E.NumWarpSamp([1 6 7 8 9 12 16 20 23]) = NumWarpSampFast;
         E = getrow(E , strcmp(E.blockGroupNames , BlockGroup));
         if isempty(E.EM)
             error('Nothing to plot!')
@@ -374,10 +350,10 @@ switch what
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
         E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
         BG = find(strcmp(E.blockGroupNames , BlockGroup));
-        E.NumWarpSamp([1 6 7 8 9 12 16 20]) = NumWarpSampFast;
+        E.NumWarpSamp([1 6 7 8 9 12 16 20 23]) = NumWarpSampFast;
         E = getrow(E , BG);
         if isempty(E.EM)
             error('Nothing to plot!')
@@ -393,11 +369,11 @@ switch what
                 RepIdx = ismember(Pall.Rep{sn}  , Rep2Plot);
                 
                 B = real(squeeze(nanmean(Pall.AvgPow{sn}(RepIdx,Chan2Plot,:,:),1))); % average over reps
-                B = squeeze(nanmean(B,1)); % average over channels
+                B = 100*squeeze(nanmean(B,1)); % average over channels
                 subplot(length(E.SN{1})-1 ,1, figCount)
                 contourf([1:E.NumWarpSamp],frex,B,60,'linecolor','none')
                 colorbar
-                %  caxis([-0.08 0.07])
+                caxis([-10 3])
                 title (['Raw PSD for SeqNumb =  ', num2str(E.SN{1}(sn)),', in Ch(s) ' , ChanLabels{Chan2Plot}])
                 hold on
                 xtikx = {};
@@ -414,7 +390,7 @@ switch what
     case 'binned_BlockGroup_SeqType'
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         % Pall is the AllData_PSD_Warped_SeqType.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
         
         SeqTrans = [5 11 22 33 44 55 0 1 2 3 4 103 104 203 204;...
             100 10 10 10 10 10 20 30 30 30 30 40 50 40 50];
@@ -424,7 +400,7 @@ switch what
         end
         Pall.Fast = zeros(size(Pall.TN));
         E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
-        E.NumWarpSamp([1 6 7 8 9 12 16 20]) = NumWarpSampFast;
+        E.NumWarpSamp([1 6 7 8 9 12 16 20 23]) = NumWarpSampFast;
         E = getrow(E , strcmp(E.blockGroupNames , BlockGroup));
         if isempty(E.EM)
             error('Nothing to plot!')
@@ -546,7 +522,7 @@ switch what
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
         % for this case because we are doigna comparisn, the BlockGroup is
         % a 1xN cell containnig the groups to be compared
         
@@ -618,7 +594,7 @@ switch what
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
         % for this case because we are doigna comparisn, the BlockGroup is
         % a 1xN cell containnig the groups to be compared
         
@@ -666,7 +642,6 @@ switch what
             text(80 ,5 , 'High Gamma' , 'FontSize' , 16)
             text(110,5 , 'Very High' , 'FontSize' , 16)
             for n = 1:length(BlockGroup)
-                [n sn]
                 snid = find(sequenceType.TypeNums == E.SN{BlG(n)}(sn));
                 bgid = find(strcmp(blockGroupNames , BlockGroup{n}));
                 legen = [legen , blockGroupTags{bgid}];
@@ -687,7 +662,7 @@ switch what
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
         % for this case because we are doigna comparisn, the BlockGroup is
         % a 1xN cell containnig the groups to be compared
         if ~exist('bandofInterest')
@@ -705,7 +680,7 @@ switch what
         for bg = 1:length(BlockGroup)
             load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
             E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
-            E.NumWarpSamp([1 6 7 8 9 12 16 20]) = NumWarpSampFast;
+            E.NumWarpSamp([1 6 7 8 9 12 16 20 23]) = NumWarpSampFast;
             BlG(bg) = find(strcmp(E.blockGroupNames , BlockGroup{bg}));
             E = getrow(E , BlG(bg));
             if isempty(E.EM)
@@ -811,7 +786,7 @@ switch what
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
         % for this case because we are doigna comparisn, the BlockGroup is
         % a 1xN cell containnig the groups to be compared
         blockGroups = {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:7] , [9:11] , [8 12] , [15:17] , [19:21] , [23:25],...
@@ -827,6 +802,7 @@ switch what
 
         C = [];
         T = [];
+        NT = 't';
         if sum(ismember (BlockGroup , blockGroupNames([12 16 20])))
             seq = input('Triplet or Quadruple? (t/q)', 's');
             switch seq
@@ -837,8 +813,6 @@ switch what
             end
         elseif sum(ismember (BlockGroup , blockGroupNames([10 11 13 14 17 18])))
             NT = input('Plot according to SeqNumb or SeqType? (n/t)', 's');
-        else
-            NT = 't';
         end
         for bg = 1:length(BlockGroup)
             load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
@@ -869,10 +843,20 @@ switch what
             for sn = 1:length(SN)    
                 T = getrow(Pall , Pall.seqNumb == SN(sn));
                 % reduce the band and channel dimensions
-                for evnt = 1:T.seqlength(1)+1
+                for evnt = 2:2:2*(T.seqlength(1)+1)
                     for tn = 1:length(T.TN)
-                        if~isempty(T.PSD{tn , evnt})
-                            temp = squeeze(T.PSD{tn , evnt}(:,bandofInterest,:));
+                        if~isempty(T.PSD1{tn , evnt/2})
+                            temp = squeeze(T.PSD1{tn , evnt/2}(:,bandofInterest,:));
+                            T.reducPSD{tn , evnt} = nanmean(temp(Chan2Plot , :) , 1);
+                        else
+                            T.reducPSD{tn , evnt} = nan(1, 5);
+                        end
+                    end
+                end
+                for evnt = 1:2:2*(T.seqlength(1)+1)
+                    for tn = 1:length(T.TN)
+                        if~isempty(T.PSD2{tn , floor(evnt/2)+1})
+                            temp = squeeze(T.PSD1{tn , floor(evnt/2)+1}(:,bandofInterest,:));
                             T.reducPSD{tn , evnt} = nanmean(temp(Chan2Plot , :) , 1);
                         else
                             T.reducPSD{tn , evnt} = nan(1, 5);
@@ -886,7 +870,7 @@ switch what
         SN = unique(C.seqNumb);
         for sn = 1:length(SN)
             D = getrow(C , C.seqNumb == SN(sn));
-            for evnt = 1:T.seqlength(1)+1
+            for evnt = 1:2*(T.seqlength(1)+1)
                 medEventLen = floor(median(cellfun(@length, D.reducPSD(:,evnt))));
                 maxLen = max(cellfun(@length, D.reducPSD(:,evnt)));
                 for tn = 1:length(D.TN)
@@ -905,7 +889,7 @@ switch what
             for bg = 1:length(BlockGroup)
                 T = getrow(D , D.blockgroup == bg);
                 if ~isempty(T.TN)
-                    for evnt = 1:T.seqlength(1)+1
+                    for evnt = 1:2*(T.seqlength(1)+1)
                         eval(['temp = T.stackPSD' , num2str(evnt),';']);
                         data = reshape(temp' , numel(temp) , 1);
                         timeStamp = repmat([1:size(temp , 2)]' , size(temp , 1) , 1);
@@ -927,8 +911,8 @@ switch what
         figCount = 1;
         for sn = 1:length(SN)
             snid = find(seqInfo.nums == SN(sn));
-            for evnt = 1:D.seqlength(1)+1
-                subplot(length(SN),V , figCount);
+            for evnt = 1:2*(D.seqlength(1)+1)
+                subplot(length(SN),2*(D.seqlength(1)+1) , figCount);
                 leg = [];
                 legen = {};
                 for bg = 1:length(BlockGroup)
@@ -940,14 +924,16 @@ switch what
                         grid on
                         legen = [legen , blockGroupTags{bgid}];
                         title (['Press ' ,num2str(evnt-1),' PSD for ' , seqInfo.tags{snid}])
-                        set(gca , 'Box' , 'off');% , 'YLim' , [-8 , 8]);
-                        line([10,10] , [min(p{sn,bg,evnt}) max(p{sn,bg,evnt})] , 'LineWidth' , 3 , 'color' , 'k')
+                        set(gca , 'Box' , 'off', 'XLim' , [1 7] , 'XTick' , [1:7] , 'XTickLabels' , [-40:10:20], 'YLim' , [-12 , 8])
+                        if ismember(evnt,[2:2:2*(D.seqlength(1)+1)])
+                            line([5,5] , [min(p{sn,bg,evnt}) max(p{sn,bg,evnt})] , 'LineWidth' , 3 , 'color' , 'k')
+                        end
+                        line([1 7] , [0 0] , 'LineWidth' , 1 , 'color' , 'k')
                     end
                     
                 end
                 figCount = figCount+1;
-                
-                
+
             end
         end
         legend(leg , legen)
@@ -960,7 +946,7 @@ switch what
         for bg = 1:length(BlockGroup)
             if ~isnan(x{sn,bg,evnt}) & ~isempty(x{sn,bg,evnt})
                 bgid = find(strcmp(blockGroupNames , BlockGroup{bg}));
-                for evnt = 1:D.seqlength(1)+1
+                for evnt = 1:2*(D.seqlength(1)+1)
                     subplot(length(BlockGroup),V , figCount);
                     leg = [];
                     legen = {};
@@ -975,20 +961,24 @@ switch what
                     figCount = figCount+1;
                     
                     title (['Press ' ,num2str(evnt-1),' PSD for ' , blockGroupTags{bgid}])
-                    set(gca , 'Box' , 'off');% , 'YLim' , [-8 , 8])
-                    line([10,10] , [min(p{sn,bg,evnt}) max(p{sn,bg,evnt})] , 'LineWidth' , 3 , 'color' , 'k')
+                    set(gca , 'Box' , 'off', 'XLim' , [1 7] , 'XTick' , [1:7] , 'XTickLabels' , [-40:10:20] , 'YLim' , [-12 , 8])
+                    if ismember(evnt,[2:2:2*(D.seqlength(1)+1)])
+                        line([5,5] , [min(p{sn,bg,evnt}) max(p{sn,bg,evnt})] , 'LineWidth' , 3 , 'color' , 'k')
+                    end
+                    line([1 7] , [0 0] , 'LineWidth' , 1 , 'color' , 'k')
                 end
             end
         end
         legend(leg , legen)       
-    case 'Aligned_seqType_average'
+    case 'Aligned_SeqType_average'
         
         allSubj_BlockGroup(1).bg = {'Intermixed1','Intermixed5','Intermixed8','Intermixed9'};
         allSubj_BlockGroup(2).bg = {'Intermixed1','Intermixed4','Intermixed7'};
+        allSubj_BlockGroup(3).bg = {'Intermixed1','Intermixed4','Intermixed7','Intermixed10'};
         
         daylab(1).dl = {'Day1' , 'Day2' , 'Day3' , 'Day4'};
         daylab(2).dl = {'Day1' , 'Day2' , 'Day3' };
-
+        daylab(3).dl = {'Day1' , 'Day2' , 'Day3' , 'Day4'};
 
         BlockGroup = allSubj_BlockGroup(subjNum).bg;
 
@@ -1022,11 +1012,19 @@ switch what
             for sn = 1:length(SN)    
                 T = getrow(Pall , Pall.seqNumb == SN(sn));
                 % reduce the band and channel dimensions
-                for evnt = 1:T.seqlength(1)+1
+                for evnt = 2:2:2*(T.seqlength(1)+1)
                     for tn = 1:length(T.TN)
-                        for bands = 1:size(T.PSD1{tn , evnt} , 2)
-                            temp = squeeze(T.PSD1{tn , evnt}(:,bands,:));
-                            eval(['T.reducPSD1' , num2str(bands) , '(tn , evnt) = nanmean(nanmean(temp(Chan2Plot , :)));'])
+                        for bands = 1:size(T.PSD1{tn , evnt/2} , 2)
+                            temp = squeeze(T.PSD1{tn , evnt/2}(:,bands,:));
+                            eval(['T.reducPSD' , num2str(bands) , '(tn , evnt) = nanmean(nanmean(temp(Chan2Plot , :)));'])
+                        end
+                    end
+                end
+                for evnt = 1:2:2*(T.seqlength(1)+1)
+                    for tn = 1:length(T.TN)
+                        for bands = 1:size(T.PSD2{tn , floor(evnt/2)+1} , 2)
+                            temp = squeeze(T.PSD2{tn , floor(evnt/2)+1}(:,bands,:));
+                            eval(['T.reducPSD' , num2str(bands) , '(tn , evnt) = nanmean(nanmean(temp(Chan2Plot , :)));'])
                         end
                     end
                 end
@@ -1035,14 +1033,25 @@ switch what
             end
         end
         % account for the first event which is the stim onset
+        % interleave the chink placement markers with 0 and negatives to
+        % account for between event intervals
         C.ChnkPlcmnt = [zeros(length(C.ChnkPlcmnt) , 1) , C.ChnkPlcmnt ];
-        C.ChnkPlcmnt(:,2) = 0; % make sure the first press does not enter analysis
+        for cp = 1:length(C.ChnkPlcmnt) 
+            if ~ismember(C.seqNumb(cp) , [20 , 0])
+                tvec = [C.ChnkPlcmnt(cp,:);[-C.ChnkPlcmnt(cp,:)]];
+            else
+                tvec = [C.ChnkPlcmnt(cp,:);zeros(1,size(C.ChnkPlcmnt(cp,:),2))];
+            end
+            ChnkPlcmnt(cp,:) = tvec(:)';
+        end
+        C.ChnkPlcmnt = ChnkPlcmnt;
+%         C.ChnkPlcmnt(:,2) = 0; % make sure the first press does not enter analysis
         %% prepare data for testing Block Groups against eachother
         D = [];
         for tn = 1:length(C.TN)
             temp = getrow(C , tn);
             T = [];
-            T.avgPSD1 = [];
+            T.avgPSD = [];
             T.seqNumb = [];
             T.band = [];
             T.blockGroup = [];
@@ -1050,14 +1059,14 @@ switch what
             T.eventNum = [];
             T.ChnkPlcmnt = [];
             for bands = 1:size(temp.PSD1{1} , 2)
-               eval(['A1 = temp.reducPSD1' , num2str(bands) , ';']);
-               T.avgPSD1 = [T.avgPSD1 ; A1'];
-               T.eventNum1 = [T.eventNum1 ; [1:length(A1)]'];
+               eval(['A = temp.reducPSD' , num2str(bands) , ';']);
+               T.avgPSD = [T.avgPSD ; A'];
+               T.eventNum = [T.eventNum ; [1:length(A)]'];
                T.ChnkPlcmnt = [T.ChnkPlcmnt ; temp.ChnkPlcmnt'];
-               T.seqNumb = [T.seqNumb ; temp.seqNumb*ones(size(A1'))];
-               T.band = [T.band; bands*ones(size(A1'))];
-               T.blockGroup = [T.blockGroup ; temp.blockgroup*ones(size(A1'))];
-               T.TN = [T.TN ; temp.TN*ones(size(A1'))];
+               T.seqNumb = [T.seqNumb ; temp.seqNumb*ones(size(A'))];
+               T.band = [T.band; bands*ones(size(A'))];
+               T.blockGroup = [T.blockGroup ; temp.blockgroup*ones(size(A'))];
+               T.TN = [T.TN ; temp.TN*ones(size(A'))];
             end
             D = addstruct(D , T);
         end
@@ -1073,7 +1082,7 @@ switch what
         end
         set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , max(T.eventNum)))
         title('High Gamma Band Power Across days for Random (blue) and Structured (red/green)')
-        grid on
+        line([0 50] , [0 0] , 'color' , 'k')
         
         subplot(312)
         for sn = 1:length(SN)
@@ -1083,7 +1092,7 @@ switch what
         end
         set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , max(T.eventNum)))
         title('Low Gamma Band Power Across days for Random (blue) and Structured (red)')
-        grid on
+        line([0 50] , [0 0] , 'color' , 'k')
         
         subplot(313)
         for sn = 1:length(SN)
@@ -1093,13 +1102,13 @@ switch what
         end
         set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , max(T.eventNum)))
         title('Beta Band Power Across days for Random (blue) and Structured (red)')
-        grid on
+        line([0 50] , [0 0] , 'color' , 'k')
     case 'AlignedWarped_SeqType'
         colorz = {[0 0  1],[1 0 0],[0 1 0],[1 0 1],[0 1 1],[0.7 0.7 0.7],[1 1 0],[.3 .3 .3]};
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
         % for this case because we are doigna comparisn, the BlockGroup is
         % a 1xN cell containnig the groups to be compared
         blockGroups = {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:7] , [9:11] , [8 12] , [15:17] , [19:21] , [23:25],...
@@ -1251,7 +1260,7 @@ switch what
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
         % for this case because we are doigna comparisn, the BlockGroup is
         % a 1xN cell containnig the groups to be compared
         blockGroups = {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:7] , [9:11] , [8 12] , [15:17] , [19:21] , [23:25],...

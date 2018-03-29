@@ -164,7 +164,7 @@ switch what
             end
             
         end
-        
+        Dout.blockGroupNames = blockGroupNames;
     case 'CalcAveragePattern_seqType'
         
         %% Calculating the average pattern for every sequence type as a general
@@ -235,4 +235,5 @@ switch what
                 Dout.SN{BG,1} = [];
             end
         end
+        Dout.blockGroupNames = blockGroupNames;
 end

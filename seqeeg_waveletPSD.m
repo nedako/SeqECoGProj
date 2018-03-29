@@ -1,5 +1,5 @@
-function [PSD , BandInfo] = secog_waveletPSD(EEG , Fs , varargin)
-%% psd = secog_waveletPSD(EEG , Fs , varargin)
+function [PSD , BandInfo] = seqeeg_waveletPSD(EEG , Fs , varargin)
+%% psd = seqeeg_waveletPSD(EEG , Fs , varargin)
 % EEG is a single channle EEG recording
 % Fs is the sampling frequency
 % PSD is a numFreqBins by length(EEG) tensor

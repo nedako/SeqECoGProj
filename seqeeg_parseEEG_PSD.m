@@ -1,4 +1,4 @@
-function Dout  = secog_parseEEG_PSD(what , Dall , subjNum, varargin)
+function Dout  = seqeeg_parseEEG_PSD(what , Dall , subjNum, varargin)
 %% reads the all channels-packed EEG data, uses the BlockInfo file to parse the EEG into single trials and ammend the bihavioral data structure
 %% It also calculates the PSD on the whole block and then parses up the PSD inot trials. This is mainly to avoid any window effect on single trials
 c = 1;
@@ -176,7 +176,7 @@ switch what
                 BlockPow.end_tr = floor(BlockPow.end_tr / DownsampleRate);
                 for ch = 1:size(Beeg.values , 1)
                     Chname{ch} = ['RawEEGpower',num2str(ch)];
-                    [BlockPow.REG, BandInfo] = secog_waveletPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate);
+                    [BlockPow.REG, BandInfo] = seqeeg_waveletPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate);
                     % normalize each trial to baseline : TimeDelay ms before the stim  onset
                     for tr = 1:length(BlockPow.start_tr)
                         [ch tr]
@@ -262,7 +262,7 @@ switch what
         Fs = 1024;
         wo = Fo/(Fs/2);  bw = wo/35; % notch to eliminate 60 Hz
         [b,a] = iirnotch(wo,bw);
-        Dall  = secog_addEventMarker(Dall, subjNum, Fs_ds , 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
+        Dall  = seqeeg_addEventMarker(Dall, subjNum, Fs_ds , 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
         Events = Dall;
         save([saveDir , 'AllData_Events.mat'] , 'Events');
         wo = 2*Fo/(Fs/2);  bw = wo/60;% notch to eliminate the first harmonic
@@ -312,7 +312,7 @@ switch what
                 for ch = 1:size(Beeg.values , 1)
                     clear baseline
                     Chname{ch} = ['RawEEGpower',num2str(ch)];
-                    [BlockPow.REG(ch,:,:), BandInfo] = secog_waveletPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate);
+                    [BlockPow.REG(ch,:,:), BandInfo] = seqeeg_waveletPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate);
                      BlockPow.REG(ch,:,:) = 10*log10(abs(BlockPow.REG(ch,:,:)).^2);
                     for tr = 1:length(BlockPow.start_tr)
                         % consider the baseline to be the average of all
@@ -394,8 +394,8 @@ switch what
         Fs = 1024;
         Fs_ds = floor(Fs/DownsampleRate);
         % find average event markers
-        Events  = secog_addEventMarker(Dall,subjNum, Fs_ds, 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
-        E  = secog_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
+        Events  = seqeeg_addEventMarker(Dall,subjNum, Fs_ds, 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
+        E  = seqeeg_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
         save([saveDir , 'AllData_AvgMarker.mat'] , 'E');
         BN = unique(Events.BN);
         
@@ -506,8 +506,8 @@ switch what
         Fs = 1024;
         Fs_ds = floor(Fs/DownsampleRate);
         % find average event markers
-        Events  = secog_addEventMarker(Dall,subjNum, Fs_ds, 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
-        E  = secog_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern_seqType' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
+        Events  = seqeeg_addEventMarker(Dall,subjNum, Fs_ds, 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
+        E  = seqeeg_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern_seqType' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
         save([saveDir , 'AllData_AvgMarker_SeqType.mat'] , 'E');
         
         % Define sequence numbers and their transformations:
@@ -617,8 +617,8 @@ switch what
         Fs = 1024;
         Fs_ds = floor(Fs/DownsampleRate);
         % find average event markers
-        Events  = secog_addEventMarker(Dall,subjNum, Fs_ds, 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
-        E  = secog_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
+        Events  = seqeeg_addEventMarker(Dall,subjNum, Fs_ds, 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
+        E  = seqeeg_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
         BN = unique(Events.BN);
         
         Pall_binned = [];
@@ -699,8 +699,8 @@ switch what
         Fs = 1024;
         Fs_ds = floor(Fs/DownsampleRate);
         % find average event markers
-        Events  = secog_addEventMarker(Dall,subjNum, Fs_ds, 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
-        E  = secog_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern_seqType' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
+        Events  = seqeeg_addEventMarker(Dall,subjNum, Fs_ds, 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
+        E  = seqeeg_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern_seqType' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
         save([saveDir , 'AllData_AvgMarker_SeqType.mat'], 'E');
         BN = unique(Events.BN);
         

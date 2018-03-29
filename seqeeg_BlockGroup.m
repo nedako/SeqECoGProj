@@ -1,4 +1,4 @@
-function secog_BlockGroup(Pall , subjNum, what,varargin)
+function seqeeg_BlockGroup(Pall , subjNum, what,varargin)
 
 
 %% setup the defaults and deal with the varargin
@@ -60,15 +60,23 @@ ChanLabels = ChanLabels(Channels);
 
 load([mainDir , 'AllData_Behav.mat'])
 load([mainDir , 'AllData_AvgMarker.mat'])
+Events  = seqeeg_addEventMarker(Dall,subjNum, Fs_ds, 'addEvent' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow);
+E  = seqeeg_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern_seqType' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
+save([mainDir , 'AllData_AvgMarker_SeqType.mat'] , 'E');
 
+E  = seqeeg_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
+save([mainDir , 'AllData_AvgMarker.mat'] , 'E');
+        
+        
 % block groupings for subjects
 BG(1).blockGroups =  {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:7] , [9:11] , [8 12] , [15:17] , [19:21] , [23:25],...
     [18 22] , [28:30] , [32:34] , [36:38], [31 35 39],[42:44],[],[]}';
 % block groupings for subject 2
 BG(2).blockGroups = {[ ] , [2 8], [14 20 26], [29 38], [], [1 7],[13 19 25], [28 37], [] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
     [18 24] , [30:32] , [34:36] , [], [27 33],[],[],[]}';
+% block groupings for subject 3
 BG(3).blockGroups = {[ ] , [1 7], [13 19], [25 31], [37 43], [2 8],[14 20], [26 32], [38 44] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
-    [18 24] , [27:29] , [33;35] , [], [30 36],[39:41] , [45:47] [42 48]}';
+    [18 24] , [27:29] , [33:35] , [], [30 36],[39:41] , [45:47] [42 48]}';
 
 % define block types
 blockGroups = BG(subjNum).blockGroups;
@@ -82,6 +90,7 @@ fastBlock = horzcat(blockGroups{1} ,blockGroups{6} , blockGroups{7}, blockGroups
 
 BandInfo.bandsLab = {'Delta <4Hz' , 'Theta 5-8Hz' , 'Alpha 9-16Hz' , 'Beta 17-36Hz' , 'L-Gamma 37-80Hz' , 'H-Gamma 80-100HZ' , 'HIGH 100-180HZ'};
 BandInfo.bands = {[0 4], [5 8] [9 16] [17 36] [37 80] [80 110] [100 180]};
+
 
 
 switch what
@@ -126,7 +135,7 @@ switch what
     case 'raw_BlockGroup'
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output  of Pall  = secog_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
+        % patterned PSDs so the output  of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD' , Dall, subjNum);
         
         Pall.Fast = zeros(size(Pall.TN));
         E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
@@ -179,7 +188,7 @@ switch what
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped_SeqType.mat
-        % patterned PSDs so the output  of Pall  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Dall, subjNum);
+        % patterned PSDs so the output  of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Dall, subjNum);
         
         % Define sequence numbers and their transformations:
         SeqTrans = [5 11 22 33 44 55 0 1 2 3 4 103 104 203 204;...
@@ -241,7 +250,7 @@ switch what
         end
     case 'binned_SeqType'
         % Pall is the AllData_PSD_Warped_SeqType.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         SeqTrans = [5 11 22 33 44 55 0 1 2 3 4 103 104 203 204;...
             100 10 10 10 10 10 20 30 30 30 30 40 50 40 50];
@@ -252,13 +261,13 @@ switch what
         
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped_SeqType.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
         Pall.Fast = zeros(size(Pall.TN));
         E.NumWarpSamp = NumWarpSampSlow*ones(size(blockGroups));
-        E.NumWarpSamp([1 6 7 8 9 12 16 20]) = NumWarpSampFast;
+        E.NumWarpSamp([1 6 7 8 9 12 16 20 23]) = NumWarpSampFast;
         Pall.Fast(ismember(Pall.BN , fastBlock)) = 1;
         clear Dall
-        for BG = 1:length(blockGroups)
+        for BG = 23:length(blockGroups)
             clear tempPow binnedPow tcount F Rep
             saveName = [mainDir,'AverageBinnedPSD_SeqType',num2str(BG) , '.mat'];
             E1 = getrow(E ,  BG);
@@ -290,7 +299,7 @@ switch what
     case 'raw_AvgPower_BlockGroup'
         % Pall needs to be the structure containing time normalized, average
         % Pall is the AllData_PSD_Warped.mat
-        % patterned PSDs so the output  of Pall  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned' , Dall, subjNum);
+        % patterned PSDs so the output  of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD_Raw_Binned' , Dall, subjNum);
         
         Pall = Dall;
         Pall.Fast = zeros(size(Pall.TN));
@@ -352,7 +361,7 @@ switch what
         end        
     case 'raw_AvgPower_SeqType'
         % Pall is the AllData_PSD_Warped_SeqType.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         Dall;
         SeqTrans = [5 11 22 33 44 55 0 1 2 3 4 103 104 203 204;...
@@ -422,7 +431,7 @@ switch what
     case 'raw_Power_SeqType'
         
         % Pall is the AllData_PSD_Warped_SeqType.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         SeqTrans = [5 11 22 33 44 55 0 1 2 3 4 103 104 203 204;...
             100 10 10 10 10 10 20 30 30 30 30 40 50 40 50];
@@ -476,7 +485,7 @@ switch what
         end
     case 'binned_Power_SeqType'
         % Pall is the AllData_PSD_Warped_SeqType.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         SeqTrans = [5 11 22 33 44 55 0 1 2 3 4 103 104 203 204;...
             100 10 10 10 10 10 20 30 30 30 30 40 50 40 50];
@@ -511,7 +520,7 @@ switch what
         end
     case 'Aligned_SeqType'
         % Pall is the AllData_PSD_Warped_SeqType.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         SeqTrans = [5 11 22 33 44 55 0 1 2 3 4 103 104 203 204;...
             100 10 10 10 10 10 20 30 30 30 30 40 50 40 50];
@@ -572,7 +581,7 @@ switch what
         end        
     case 'AlignedWarped_SeqType'
         % Pall is the AllData_PSD_Warped_SeqType.mat
-        % patterned PSDs so the output of Pall  = secog_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
+        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         SeqTrans = [5 11 22 33 44 55 0 1 2 3 4 103 104 203 204;...
             100 10 10 10 10 10 20 30 30 30 30 40 50 40 50];
@@ -611,7 +620,6 @@ switch what
                     Pall.PSD = {};
                     
                 end
-                [BG bn]
                 if size(Pall.PSD , 2)>1
                     P = addstruct(P,Pall);
                 end

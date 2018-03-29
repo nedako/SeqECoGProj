@@ -1,4 +1,4 @@
-function Dout=secog_analyze (what , varargin)
+function Dout=seqeeg_analyze (what , varargin)
 getdat = 1;
 c = 1;
 while(c<=length(varargin))
@@ -46,7 +46,7 @@ switch what
         for i=1:length(subj_name)
             clear ANA
             if getdat
-                ANA = secog_subj(subj_name{i} , 0);
+                ANA = seqeeg_subj(subj_name{i} , 0);
             else
                 ANA = getrow(Dall , Dall.SN == i);
             end
@@ -190,7 +190,7 @@ switch what
         i  = find(strcmp(subj_name , subjCode));
         clear ANA
         if getdat
-            ANA = secog_subj(subj_name{i} , 0);
+            ANA = seqeeg_subj(subj_name{i} , 0);
         else
             ANA = getrow(Dall , Dall.SN == i);
         end

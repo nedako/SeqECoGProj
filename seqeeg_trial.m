@@ -1,8 +1,6 @@
-function [D]=secog_trial(MOV,D,fig,varargin)
-% Reach_trial
-% extracts the statistics from the movement data
-% for one trial.
-% Does a nice display of each trial
+function [D]=seqeeg_trial(MOV,D,fig,varargin)
+% D is the data structure including the forces
+
 close all
 
 % ------------------------------------------------
@@ -25,8 +23,8 @@ sampfreq = 1000/sample;
 
 % The force recordings
 
-F        = (MOV(:,4:8));
-F        = smooth_kernel(F,4);
+D.F{1}        = (MOV(:,4:8));
+D.F{1}        = smooth_kernel(D.F{1},4);
 
 
 fingers = 5;
@@ -35,8 +33,8 @@ peakTime   = [];
 
 % ------------------------ Force peak detection
 for i = 1:fingers
-    if max(F(:,i)) > forceThres
-        [PH,PT]=findpeaks(F(:,i),'minpeakdistance',minDist,'minpeakheight',forceThres);
+    if max(D.F{1}(:,i)) > forceThres
+        [PH,PT]=findpeaks(D.F{1}(:,i),'minpeakdistance',minDist,'minpeakheight',forceThres);
         peakHeight          = [peakHeight ; PH];
         peakTime            = [peakTime   ; PT];
         D.numPeaks(i)       = length(PH);
@@ -47,7 +45,6 @@ for i = 1:fingers
        D.avrgPeakHeight(i)= NaN; 
     end
 end
-
 
 % -------- Find the number of finger presses by counting "responsexx" fields
 A = fieldnames(D);
@@ -97,7 +94,7 @@ if fig
     % ---------------- Plot forces only during state 5 (WAIT_PRESS)
     %idx = (state == 5);
     idx = 1:length(time);
-    plot(time(idx), F(idx , :),'LineWidth' , 3)
+    plot(time(idx), D.F{1}(idx , :),'LineWidth' , 3)
     hold on
     legend('Finger1','Finger2','Finger3','Finger4','Finger5')
     xlabel('Time(ms)')
