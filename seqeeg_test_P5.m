@@ -3,6 +3,7 @@
 subjNum = 3;
 % Good Channels for P4
 chans = [4 6:12 14 26:34 36:45 47 77 78 80 94:97 105:111 18];
+%%
 seqeeg_makeData(subjNum , chans)
 
 %% Visualize Behavior
@@ -130,7 +131,11 @@ seqeeg_visualizePSD([],subjNum,'Aligned_SeqType_average' ,'BlockGroup' , {'Singl
     'Chan2Plot' ,CH,'Channels' , chans , 'bandofInterest' , 6);
 
 C = seqeeg_ForcePower('binned_AlignTrials' ,Pall,subjNum, 'Channels' , chans,'BlockGroup',{'SingleFingSlow1','SingleFingSlow2','SingleFingSlow3','SingleFingSlow4'});
-C = seqeeg_ForcePower('binned_AlignTrials' ,Pall,subjNum, 'Channels' , chans,'BlockGroup',{'Intermixed2','Intermixed5','Intermixed8','Intermixed9'});
+C = seqeeg_ForcePower('binned_AlignTrials' ,Pall,subjNum, 'Channels' , chans,'BlockGroup',{'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4'});
+C = seqeeg_ForcePower('binned_AlignTrials' ,Pall,subjNum, 'Channels' , chans,'BlockGroup',{'Intermixed1','Intermixed2','Intermixed3','Intermixed4',...
+    'Intermixed6','Intermixed7','Intermixed9','Intermixed10'});
+C = seqeeg_ForcePower('binned_AlignTrials' ,Pall,subjNum, 'Channels' , chans,'BlockGroup',{'Intermixed1'});
+C = seqeeg_ForcePower('binned_AlignTrials' ,Pall,subjNum, 'Channels' , chans,'BlockGroup',{'Intermixed10'});
 
 %%
 load('AllData_PSD_Warped.mat')

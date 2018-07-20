@@ -122,5 +122,15 @@ for fi=1:numFreqBins
         tempPSD = [tempPSD , downsample(temp(ch , :) , DownsampleRate)];
     end
     PSD(fi,:) = tempPSD;
-  
+    
+    
+    
+    
+    
+    if  sum(strcmp(PoworDec , {'p' , 'P'}))
+        temp = 10*log10(abs(nanmean(reshape(eegconv,n_data,1).^2,2)').^2);
+        PSD(fi,:) = downsample(temp , DownsampleRate);
+    else
+        PSD(fi,:) = downsample(nanmean(reshape(eegconv,n_data,1).^2,2)' , DownsampleRate);
+    end
 end

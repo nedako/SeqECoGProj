@@ -10,8 +10,8 @@ DownsampleRate = 10;
 NumWarpSampFast = 150;
 NumWarpSampSlow = 300;
 TimeDelay = 0.5; % sec
-FreqRange = [4 184];
-numFreqBins = 45;
+FreqRange = [2 180];
+numFreqBins = 90;
 load([saveDir , 'ChanLabels.mat']);
 Channels = [1:length(ChanLabels)];
 %%  control for too short IPIs that the keys get accidentally pressed
@@ -184,10 +184,10 @@ switch what
                     case 'H'
                         [CatREG] = seqeeg_HilbertPSD(chanCatData , Fs , 'DownsampleRate' , DownsampleRate , 'PoworDec' , 'd','NumChans' , size(Beeg.values , 1)); % get the decomposition
                     case 'W'
-                        [CatREG] = seqeeg_waveletPSD(chanCatData , Fs , 'DownsampleRate' , DownsampleRate , 'PoworDec' , 'd','NumChans' , size(Beeg.values , 1)); % get the decomposition
+                        [CatREG] = seqeeg_waveletPSD(chanCatData , Fs , 'DownsampleRate' , DownsampleRate , 'PoworDec' , 'd'); % get the decomposition
                 end
+                numsamp = floor(length(downsample(chanCatData , DownsampleRate))/size(Beeg.values , 1));
                 for ch = 1:size(Beeg.values , 1)
-                    numsamp = length(downsample(Beeg.values(ch,:) , DownsampleRate));
                     % get the channel out of the concatenated PSD\
                     chanStart = 1+ (ch-1)*numsamp;
                     chanEnd   = ch * numsamp;
@@ -323,31 +323,23 @@ switch what
                 end
                 BlockPow.start_tr = floor(BlockPow.start_tr / DownsampleRate);
                 BlockPow.end_tr = floor(BlockPow.end_tr / DownsampleRate);
-                
-                chanCatData = reshape(Beeg.values' , 1, numel(Beeg.values));
-                % concatenate all the chanles to speed up analysis
-                switch HilbertOrWavelet
-                    case 'H'
-                        [CatREG] = seqeeg_HilbertPSD(chanCatData , Fs , 'DownsampleRate' , DownsampleRate , 'PoworDec' , 'p','NumChans' , size(Beeg.values , 1)); % get the decomposition
-                    case 'W'
-                        [CatREG] = seqeeg_waveletPSD(chanCatData , Fs , 'DownsampleRate' , DownsampleRate , 'PoworDec' , 'p','NumChans' , size(Beeg.values , 1)); % get the decomposition
-                end
-                
                 for ch = 1:size(Beeg.values , 1)
-                    numsamp = length(downsample(Beeg.values(ch,:) , DownsampleRate));
-                    % get the channel out of the concatenated PSD\
-                    chanStart = 1+ (ch-1)*numsamp;
-                    chanEnd   = ch * numsamp;
-                    BlockPow.REG = CatREG(:,chanStart:chanEnd);
                     clear baseline
+                    Chname{ch} = ['RawEEGpower',num2str(ch)];
+                    switch HilbertOrWavelet
+                        case 'H'
+                            [BlockPow.REG(ch,:,:)] = seqeeg_HilbertPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate , 'PoworDec' , 'P'); % get the decomposition
+                        case 'W'
+                            [BlockPow.REG(ch,:,:)] = seqeeg_waveletPSD(Beeg.values(ch , :) , Fs , 'DownsampleRate' , DownsampleRate , 'PoworDec' , 'P'); % get the decomposition
+                    end
                     for tr = 1:length(BlockPow.start_tr)
                         % consider the baseline to be the average of 250 ms before stim onset to 50 ms before stim onset
-                        baseline(tr, :) = squeeze(nanmean(BlockPow.REG(:,BlockPow.start_tr(tr)-floor(Fs_ds*TimeDelay/2):BlockPow.start_tr(tr)-floor(Fs_ds*TimeDelay/10)) , 2));
+                        baseline(tr, :) = squeeze(nanmean(BlockPow.REG(ch,:,BlockPow.start_tr(tr)-floor(Fs_ds*TimeDelay/2):BlockPow.start_tr(tr)-floor(Fs_ds*TimeDelay/10)) , 3));
                     end
 %                      baseline = nanmean(baseline , 1)';
                     % normalize each trial to baseline : TimeDelay ms before the stim  onset
                     for tr = 1:length(BlockPow.start_tr)
-                        X = squeeze(BlockPow.REG(:,BlockPow.start_tr(tr)-floor(Fs_ds*TimeDelay) : BlockPow.end_tr(tr)+floor(Fs_ds*2*TimeDelay)));
+                        X = squeeze(BlockPow.REG(ch,:,BlockPow.start_tr(tr)-floor(Fs_ds*TimeDelay) : BlockPow.end_tr(tr)+floor(Fs_ds*2*TimeDelay)));
 %                         X = (X - repmat( baseline(tr, :)' , 1,size(X,2)))./repmat( baseline(tr, :)' , 1,size(X,2));
                         eval(['D.PSD{tr,1}(ch , :,:)  = X;']);
                         eval(['D.BaseLine{tr,1}(ch , :,:)  = baseline(tr, :)'';']);
@@ -394,8 +386,8 @@ switch what
                     temp = D.PSD{tn};
                     tempbl = D.BaseLine{tn};
                     for b =1:length(BandInfo.bandid)
-                        P.PSD{tn,1}(:,b, :) =  nanmean(temp(:,BandInfo.bandid{b}(1) : BandInfo.bandid{b}(end),:) , 2);
-                        P.BL{tn,1}(:,b) =  nanmean(tempbl(:,BandInfo.bandid{b}(1) : BandInfo.bandid{b}(end),:) , 2);
+                        P.PSD{tn,1}(:,b, :) =  nanmean(temp(:,BandInfo.bandid{b}(1) : BandInfo.bandid{b}(2),:) , 2);
+                        P.BL{tn,1}(:,b) =  nanmean(tempbl(:,BandInfo.bandid{b}(1) : BandInfo.bandid{b}(2),:) , 2);
                     end
                 else
                     P.PSD{tn,1} = NaN;

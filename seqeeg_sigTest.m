@@ -584,7 +584,7 @@ switch what
                 allSubj_BlockGroup(2).bg = {'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3'};
                 allSubj_BlockGroup(3).bg = {'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4'};
         end
-        BlockGroup = allSubj_BlockGroup(subjNum).bg;
+        zBlockGroup = allSubj_BlockGroup(subjNum).bg;
         C = [];
         T = [];
         whatToCompare = input('Compare around press-time or between presses?(a/b)', 's');

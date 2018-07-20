@@ -17,8 +17,8 @@ mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNu
 % cd(['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' , subjname{subjNum}]);
 load([mainDir,'AllData_Behav.mat'])
 
-Dout  = seqeeg_parseEEG_PSD('ParseEEG-freqDecomp' , Dall, subjNum , 'Channels' , chans,'HilbertOrWavelet' , 'H');
-Dout  = seqeeg_parseEEG_PSD('ParseEEG-calc_norm_PSD' , Dall, subjNum , 'Channels' , chans,'HilbertOrWavelet' , 'H');
+% Dout  = seqeeg_parseEEG_PSD('ParseEEG-freqDecomp' , Dall, subjNum , 'Channels' , chans,'HilbertOrWavelet' , 'H');
+% Dout  = seqeeg_parseEEG_PSD('ParseEEG-calc_norm_PSD' , Dall, subjNum , 'Channels' , chans,'HilbertOrWavelet' , 'H');
 load([mainDir,'AllData_Events.mat'])
 % time warp
 % Dout  = seqeeg_parseEEG_PSD('TimeWarpPSD_Raw_Binned' , Events, subjNum);

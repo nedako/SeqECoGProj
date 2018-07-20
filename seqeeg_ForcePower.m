@@ -138,6 +138,8 @@ switch what
         end
         for b = 1:size(C.maxCorr , 2)
             [~ , C.bestChanPerBand(b,:)] = sort(abs(C.maxCorr(1:length(Channels)-1,b)) , 'descend');
+            C.bestChanPerBand_corr(b,:) = C.maxCorr(C.bestChanPerBand(b,:) , b);
+            C.bestChanPerBand_Labels(b,:) = ChanLabels(C.bestChanPerBand(b,:));
         end
         [C.SortedBands(2,:),C.SortedBands(1,:)] = sort(nansum(abs(C.maxCorr) , 1) , 'descend');
         [C.SortedChans{1}(2,:),C.SortedChans{1}(1,:)] = sort(nansum(abs(C.maxCorr) , 2) , 'descend');
@@ -167,11 +169,6 @@ switch what
         Corr.Sortedband = Corr.band(Corr.Sortedcor(:,1));
         Corr.Sortedch = Corr.ch(Corr.Sortedcor(:,1));
         Corr.SortedchLabels = ChanLabels(Corr.Sortedch);
-%         seqeeg_ForcePower('binned_AlignTrials' ,Pall,subjNum, 'Channels' , Channels,'BlockGroup',BlockGroup)
-%         seqeeg_ForcePower('binned_AlignTrials' ,Pall,subjNum, 'Chan2Plot' , Corr.Sortedch(2),'Channels' , Channels,'BlockGroup',BlockGroup ,...
-%             'BandPowerForceCorr' , C.maxCorr(Corr.Sortedch(1) , :))
-%         seqeeg_ForcePower('binned_AlignTrials' ,Pall,subjNum, 'Chan2Plot' , Corr.Sortedch(3),'Channels' , Channels,'BlockGroup',BlockGroup ,...
-%             'BandPowerForceCorr' , C.maxCorr(Corr.Sortedch(1) , :))
     case 'binned_AlignTrials'
         C = seqeeg_ForcePower('AlignPlot' ,Pall, subjNum, 'Channels' , Channels , 'BlockGroup' , BlockGroup);
         % pall --> load([mainDir , 'AllData_PSD_StimNorm.mat'])
@@ -209,8 +206,8 @@ switch what
         close(h1)
         figure('color' , 'white')
         figCount = 1;
-        for b =1:length(BandInfo.bandsLab)
-            subplot(length(BandInfo.bandsLab),2, figCount)
+        for b =4:length(BandInfo.bandsLab)
+            subplot(length(BandInfo.bandsLab)-3,2, figCount)
             Chan2Plot = C.bestChanPerBand(b , 1:N);
             hold on
             plotshade(xBand_s{b}' , pBand_s{b} , eBand_s{b},'patchcolor',[.8 0 .3] , 'linecolor' , [.8 0 .3])
@@ -225,12 +222,12 @@ switch what
             line([1 1500]  , [0 0], 'color' , 'k' , 'LineWidth' , 1)
             ylabel(['%C ',BandInfo.bandsLab{b}])
             xlabel('Time (ms)')
-            set(gca ,'FontSize' , 14,'Box' , 'off');
+            set(gca ,'FontSize' , 14,'Box' , 'off','XTick',[0 500,1500] , 'XTickLabels' , [-500 0 1000]);
             figCount = figCount + 1;
             
             
             
-            subplot(length(BandInfo.bandsLab),2, figCount)
+            subplot(length(BandInfo.bandsLab)-3,2, figCount)
             hold on
             plotshade(xBand_e{b}' , pBand_e{b} , eBand_e{b},'patchcolor',[.8 0 .3] , 'linecolor' , [.8 0 .3])
             corTag = num2str(C.maxCorr(Chan2Plot(1),b));
@@ -244,7 +241,21 @@ switch what
             line([1 2000]  , [0 0], 'color' , 'k' , 'LineWidth' , 1)
             ylabel(['%C ',BandInfo.bandsLab{b}])
             xlabel('Time (ms)')
-            set(gca ,'FontSize' , 14,'Box' , 'off');
+            set(gca ,'FontSize' , 14,'Box' , 'off','XTick' , [0 500 1000,1500,2000] , 'XTickLabels' , [-500 1000 0 500 1000]);
+            figCount = figCount + 1;
+        end
+        figure('color' , 'white')
+        figCount = 1;
+        for b =4:length(BandInfo.bandsLab)
+            subplot(length(BandInfo.bandsLab)-3,1, figCount)
+            hold on
+            imagesc(C.bestChanPerBand_corr(b,:) , [-0.7 .1])
+            colorbar
+            XTickLab = C.bestChanPerBand_Labels(b,:);
+            ylabel([BandInfo.bandsLab{b}])
+            title('Correlation with the average force traces')
+            xlabel('Time (ms)')
+            set(gca ,'FontSize' , 14,'Box' , 'off','XTick',[1:length(XTickLab)] , 'XTickLabels' , XTickLab , 'XTickLabelRotation' , 45);
             figCount = figCount + 1;
         end
         

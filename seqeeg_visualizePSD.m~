@@ -14,13 +14,37 @@ function seqeeg_visualizePSD(Pall , subjNum, what,varargin)
 %      'raw_BlockGroup_AvgChann'
 
 %% set defaults and deal with varargin
+
+clear tempcol
+c1 = [255, 153, 179]/255; % Random Red Tones
+ce = [153, 0, 51]/255;
+for rgb = 1:3
+    tempcol(rgb , :) = linspace(c1(rgb),ce(rgb) , 6);
+end
+for i = 1:length(tempcol)
+    colz{i,1} = tempcol(: , i)';
+end
+
+clear tempcol
+c1 = [153, 194, 255]/255; % structured blue tones
+ce = [0, 0, 102]/255;
+for rgb = 1:3
+    tempcol(rgb , :) = linspace(c1(rgb),ce(rgb) , 6);
+end
+for i = 1:length(tempcol)
+    colz{i,2} = tempcol(: , i)';
+    avgCol{i} = mean([colz{i,2} ; colz{i,1}],1);
+end
+
+
+
 subjname = {'P2' , 'P4' , 'P5'};
 mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} ,'/'];
 NumWarpSampFast = 150;
 NumWarpSampSlow = 300;
 DownsampleRate = 10;
-FreqRange = [2 180];
-numFreqBins = 90;
+FreqRange = [4 184];
+numFreqBins = 45;
 load([mainDir , 'ChanLabels.mat']);
 Channels = length(ChanLabels);
 separateReps = 0;
@@ -102,7 +126,6 @@ min_freq =  FreqRange(1);
 max_freq = FreqRange(2);
 frex = linspace(min_freq, max_freq,numFreqBins);
 %% load required data
-mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} ,'/'];
 load([mainDir , 'ChanLabels.mat'])
 ChanLabels = ChanLabels(Channels);
 load([mainDir , 'AllData_Behav.mat'])
@@ -146,7 +169,7 @@ sequenceType.Numtags = {'Null Trials' , 'Single Finger 1' , 'Single Finger 2' , 
     'Triplet Segments','Triplet Segments' , 'Quadruple Segments','Quadruple Segments'}';
 
 BandInfo.bandsLab = {'Delta <4Hz' , 'Theta 5-8Hz' , 'Alpha 9-16Hz' , 'Beta 17-36Hz' , 'L-Gamma 37-80Hz' , 'H-Gamma 80-100HZ' , 'HIGH 100-180HZ'};
-BandInfo.bands = {[0 4], [5 8] [9 16] [17 36] [37 80] [80 100] [100 180]};
+BandInfo.bands = {[0 4], [5 9] [9 17] [17 36] [37 80] [80 110] [100 180]};
 colorz = {[0 0  1],[1 0 0],[0 1 0],[1 0 1],[0 1 1],[0.7 0.7 0.7],[1 1 0],[.3 .3 .3]};
 switch what
     %% PLOT average normalized binned power
@@ -239,68 +262,13 @@ switch what
         fastBlock = horzcat(blockGroups{1} , blockGroups{3} , blockGroups{6}, blockGroups{10},blockGroups{14});
         Pall.Fast(ismember(Pall.BN , fastBlock)) = 1;
         clear Dall
-        fig1 = figure;
-       
-        if separateReps
-             snCount = 0;
-            for sn = 1:length(E.SN{1})
-                if E.SN{1}(sn) ~= 5
-                    snCount = snCount +1;
-                    for rep = 1:2
-                        id = ismember(Pall.BN , E.blockGroups{1}) & ismember(Pall.seqNumb , E.SN{1}(sn)) & ismember(Pall.Rep , rep);
-                        F = getrow(Pall , id);
-                        % sum the warped PSDs insife the F structure
-                        tcount = 1;
-                        for tn = 1:length(F.PSD_stim)
-                            if isequal(size(F.PSD_stim{tn}) ,[length(ChanLabels) , length(BandInfo.bandsLab) , E.NumWarpSamp])
-                                tempPow(tcount , :,:,:) = F.PSD_stim{tn};
-                                tcount = tcount +1;
-                            end
-                        end
-                        hold on
-                        for b = 1:length(BandInfo.bands)
-                            temp = 100*squeeze(nanmean(tempPow(:,Chan2Plot,b,:),2))';
-                            [xBand{b,snCount,rep} , pBand{b,snCount,rep} , eBand{b,snCount,rep}] = lineplot(repmat([1:E.NumWarpSamp]',size(temp,2) , 1) , reshape(temp,numel(temp),1) , 'plotfcn' , 'nanmean');
-                        end
-                    end
-                end
-            end
-            close(fig1)
-            figure('color' , 'white')
-            snCount = 0;
-            for sn = 1:length(E.SN{1})
-                if E.SN{1}(sn) ~= 5
-                    snCount = snCount +1;
-                    figCount  = sn;
-                    NEM = E.NEM{1}(sn , ~isnan(E.NEM{1}(sn,:)));
-                    % actual time in seconds to use for labeling the time axis
-                    EM  = E.EM{1}(sn ,  ~isnan(E.EM{1}(sn,:)))/100;
-                    for b =1:length(BandInfo.bandsLab)
-                        subplot(length(BandInfo.bandsLab),length(E.SN{1})-1, figCount)
-                        hold on
-                        h1 = plotshade(xBand{b,snCount,1}' , pBand{b,snCount,1} , eBand{b,snCount,1},'patchcolor',[.8 0 .3] , 'linecolor' , [.8 0 .3])
-                        h2 = plotshade(xBand{b,snCount,2}' , pBand{b,snCount,2} , eBand{b,snCount,2},'patchcolor',[.5 .9 .3] , 'linecolor' , [.5 .9 .3])
-                        title ([E.blockGroupNames{1}, ' Ch(s) ' , ChanLabels{Chan2Plot} , 'SeqType ' , num2str(E.SN{1}(sn)) , ' Band',BandInfo.bandsLab{b}])
-                        xtikx = {};
-                        for lin = 1:length(NEM)
-                            xtikx = [xtikx  , num2str(EM(lin))];
-                            line([NEM(lin) NEM(lin)] , [0 max(pBand{b})] , 'color' , 'b' , 'LineStyle' , ':' , 'LineWidth' , 3)
-                        end
-                        ylabel('% change from baseline')
-                        xlabel('Normalized Time (ms)')
-                        set(gca ,'XTickLabels' , xtikx, 'XTick' , NEM ,...
-                            'XLim' , [1 E.NumWarpSamp] ,'FontSize' , 10,'Box' , 'off');
-                        legend([h1 , h2] , {'Rep 1' , 'Rep 2'})
-                        figCount = figCount + size(xBand , 2);
-                    end
-                end
-            end
-        else
-            snCount = 0;
-            for sn = 1:length(E.SN{1})
-                if E.SN{1}(sn) ~= 5
-                    snCount = snCount +1;
-                    id = ismember(Pall.BN , E.blockGroups{1}) & ismember(Pall.seqNumb , E.SN{1}(sn));
+        D = [];
+        snCount = 0;
+        for sn = 1:length(E.SN{1})
+            if E.SN{1}(sn) ~= 5
+                snCount = snCount +1;
+                for rep = 1:2
+                    id = ismember(Pall.BN , E.blockGroups{1}) & ismember(Pall.seqNumb , E.SN{1}(sn)) & ismember(Pall.Rep , rep);
                     F = getrow(Pall , id);
                     % sum the warped PSDs insife the F structure
                     tcount = 1;
@@ -310,42 +278,45 @@ switch what
                             tcount = tcount +1;
                         end
                     end
-                    hold on
-                    for b = 1:length(BandInfo.bands)
-                        temp = 100*squeeze(nanmean(tempPow(:,Chan2Plot,b,:),2))';
-                        [xBand{b,snCount} , pBand{b,snCount} , eBand{b,snCount}] = lineplot(repmat([1:E.NumWarpSamp]',size(temp,2) , 1) , reshape(temp,numel(temp),1) , 'plotfcn' , 'nanmean');
+                    M = [];
+                    for b  = 1:length(BandInfo.bands)
+                        temp = squeeze(nanmean(tempPow(:,Chan2Plot,b,:),2))';
+                        T.pow = reshape(temp,numel(temp),1);
+                        T.band = b*ones(size(T.pow));
+                        T.NumWarpSamp = repmat([1:E.NumWarpSamp]',size(temp,2) , 1);
+                        T.rep = rep*ones(size(T.pow));
+                        T.sn = E.SN{1}(sn)*ones(size(T.pow));
+                        M = addstruct(M , T);
+                        clear T
                     end
-                end
-            end
-            close(fig1)
-            figure('color' , 'white')
-            snCount = 0;
-            for sn = 1:length(E.SN{1})
-                if E.SN{1}(sn) ~= 5
-                    snCount = snCount +1;
-                    figCount  = snCount;
-                    NEM = E.NEM{1}(sn , ~isnan(E.NEM{1}(sn,:)));
-                    % actual time in seconds to use for labeling the time axis
-                    EM  = E.EM{1}(sn ,  ~isnan(E.EM{1}(sn,:)))/100;
-                    for b =1:length(BandInfo.bandsLab)
-                        subplot(length(BandInfo.bandsLab),length(E.SN{1})-1, figCount)
-                        hold on
-                        plotshade(xBand{b,snCount}' , pBand{b,snCount} , eBand{b,snCount})
-                        title ([E.blockGroupNames{1}, ' Ch(s) ' , ChanLabels{Chan2Plot} , 'SeqType ' , num2str(E.SN{1}(sn)) , ' Band',BandInfo.bandsLab{b}])
-                        xtikx = {};
-                        for lin = 1:length(NEM)
-                            xtikx = [xtikx  , num2str(EM(lin))];
-                            line([NEM(lin) NEM(lin)] , [0 max(pBand{b})] , 'color' , 'b' , 'LineStyle' , ':' , 'LineWidth' , 3)
-                        end
-                        ylabel('% change from baseline')
-                        xlabel('Normalized Time (ms)')
-                        set(gca ,'XTickLabels' , xtikx, 'XTick' , NEM ,...
-                            'XLim' , [1 E.NumWarpSamp] ,'FontSize' , 10,'Box' , 'off');
-                        figCount = figCount + size(xBand , 2);
-                    end
+                    D = addstruct(D , M);
+                    clear M
                 end
             end
         end
+        col = colz(1,:);
+        figure('color' , 'white')
+        fcount = 1;
+        snfinal = unique(D.sn);
+        for b = 1:length(BandInfo.bands)
+            for sn = 1:length(snfinal)
+                subplot(7,length(snfinal) , fcount)
+                lineplot([D.NumWarpSamp] , D.pow , 'plotfcn' , 'nanmean',...
+                    'split', D.rep , 'subset' , D.sn==snfinal(sn) & D.band==b  , 'linecolor' , col,...
+                    'errorcolor' , col , 'errorbars' , repmat({'shade'} , 1 , 2) , 'shadecolor' ,col,...
+                    'linewidth' , 1 , 'markertype' , repmat({'o'} , 1  , 2) , 'markerfill' , col,...
+                    'markersize' , 3, 'markercolor' , col);
+                hold on
+                line([0 length(unique(D.NumWarpSamp))] , [0 0])
+                ylabel('% change from BL' )
+                xlabel('norm time' )
+                title(['sn =  ' , num2str(snfinal(sn)) , ' band = ' ,num2str(b)])
+%                 set(gca,'FontSize' , 18 ,'GridAlpha' , .2 , 'Box' , 'off' , 'YLim' , [.4 1.4],'YTick' , [.5:.1:1.3] ,...
+%                         'YGrid' , 'on');
+                fcount = fcount+1;
+            end
+        end
+
     case 'raw_BlockGroup_SeqType'
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         % Pall needs to be the structure containing time normalized, average
@@ -373,7 +344,7 @@ switch what
                 subplot(length(E.SN{1})-1 ,1, figCount)
                 contourf([1:E.NumWarpSamp],frex,B,60,'linecolor','none')
                 colorbar
-                caxis([-10 3])
+%                 caxis([-10 3])
                 title (['Raw PSD for SeqNumb =  ', num2str(E.SN{1}(sn)),', in Ch(s) ' , ChanLabels{Chan2Plot}])
                 hold on
                 xtikx = {};
@@ -536,13 +507,11 @@ switch what
             fig = figure;
             for sn = 1:length(Pall.PowTR)
                 for rep = 1:2
-                    repID = Pall.Rep{sn} == rep
+                    repID = Pall.Rep{sn} == rep;
                     Tr = Pall.PowTR{sn}(repID,:,:);
-                    Bl = Pall.PowBL{sn}(repID,:,:);
                     for cg = 1:length(chanGroup)
                         Tcg = Tr(:,chanGroup{cg} , :);
-                        Bcg = Bl(:,chanGroup{cg} , :);
-                        diff  = 100*squeeze(mean((Tcg - Bcg)./Bcg,2)); % percent change from baseline
+                        diff  = squeeze(mean(Tcg,2)); % percent change from baseline
                         bandLabel = repmat(frex' , size(diff,1) , 1);
                         data{cg , n}{sn,rep} = reshape(diff' , numel(diff) , 1);
                         [x{cg,n}{sn,rep} , p{cg,n}{sn,rep} , e{cg,n}{sn,rep}] = lineplot(bandLabel , data{cg , n}{sn,rep} , 'plotfcn' , 'nanmean');
@@ -609,21 +578,17 @@ switch what
             fig = figure;
             for sn = 1:length(Pall.PowTR)
                 Tr = Pall.PowTR{sn};
-                Bl = Pall.PowBL{sn};
                 for cg = 1:length(chanGroup)
                     Tcg = Tr(:,chanGroup{cg} , :);
-                    Bcg = Bl(:,chanGroup{cg} , :);
-                    diff  = 100*squeeze(mean((Tcg - Bcg)./Bcg,2)); % percent change from baseline
+                    diff  = squeeze(mean(Tcg ,2)); % percent change from baseline
                     bandLabel = repmat(frex' , size(diff,1) , 1);
                     data{cg , n}{sn} = reshape(diff' , numel(diff) , 1);
                     [x{cg,n}{sn} , p{cg,n}{sn} , e{cg,n}{sn}] = lineplot(bandLabel , data{cg , n}{sn} , 'plotfcn' , 'nanmean');
-%                     diff{sn}(n, :) = 100*(APtr{cg,n}(sn,:) - APbl{cg,n}(sn,:))./ APbl{cg,n}(sn,:);
                 end
             end
-            close(fig)
+            close all
         end
         figure('color' , 'white')
-        fCont = 1;
         
         for sn = 1:length(Pall.PowTR)
             subplot(1,length(Pall.PowTR),sn)
@@ -646,16 +611,17 @@ switch what
                 bgid = find(strcmp(blockGroupNames , BlockGroup{n}));
                 legen = [legen , blockGroupTags{bgid}];
                 h(n).fig = plotshade(x{cg,n}{sn}' , p{cg,n}{sn} , e{cg,n}{sn},'transp' , .2 , 'patchcolor' , colorz{n} , 'linecolor' , colorz{n} , 'linewidth' , 3 );
+                hold on
+                plot(x{cg,n}{sn}' , p{cg,n}{sn} ,'color' , colorz{n} , 'LineWidth' , 3 );
                 leg = [leg , h(n).fig];
                 hold on
-                %                 grid on
             end
             legend(leg , legen , 'Box' , 'off')
             title(['Percent Change in Power from Baseline in ' , sequenceType.Typetags{snid} ])
-            set(gca , 'YLim',[-12 12] , 'FontSize' , 16 , 'Box' , 'off');
+            set(gca ,  'FontSize' , 16 , 'Box' , 'off' , 'XLim' , [0 110]);%,'YLim',[-12 12] ,);
             ylabel('(%)')
             xlabel('Frequency (Hz)')
-            fCont = fCont +1;
+            line([0 2*length(frex)] , [0 0] , 'color' , 'k' , 'LineWidth' , 1.5)
         end
     case 'Compare_SeqType_TemporalPattern'
         colorz = {[0 0  1],[1 0 0],[0 1 0],[1 0 1],[0 1 1],[0.7 0.7 0.7],[1 1 0],[.3 .3 .3]};
@@ -902,7 +868,7 @@ switch what
                 end
             end
             V = evnt;
-            close(fig)
+            close all
         end
 %         P  = cellfun(@nanmean , p);
 %         E = cellfun(@nanmean , e);
@@ -919,12 +885,14 @@ switch what
                     if ~isnan(x{sn,bg,evnt}) & ~isempty(x{sn,bg,evnt})
                         bgid = find(strcmp(blockGroupNames , BlockGroup{bg}));
                         h(sn).fig = plotshade(x{sn,bg,evnt}' , p{sn,bg,evnt} , e{sn,bg,evnt},'transp' , .2 , 'patchcolor' , colorz{bg} , 'linecolor' , colorz{bg} , 'linewidth' , 3 );
+                        hold on
+                        plot(x{sn,bg,evnt}' , p{sn,bg,evnt} , 'color' , colorz{bg} ,  'LineWidth' , 1.5)
                         leg = [leg , h(sn).fig];
                         hold on
                         grid on
                         legen = [legen , blockGroupTags{bgid}];
                         title (['Press ' ,num2str(evnt-1),' PSD for ' , seqInfo.tags{snid}])
-                        set(gca , 'Box' , 'off', 'XLim' , [1 7] , 'XTick' , [1:7] , 'XTickLabels' , [-40:10:20], 'YLim' , [-12 , 8])
+                        set(gca , 'Box' , 'off', 'XTick' , [1:7] , 'XTickLabels' , [-40:10:20], 'YLim' , [-10 , 10] , 'FontSize' , 6)
                         if ismember(evnt,[2:2:2*(D.seqlength(1)+1)])
                             line([5,5] , [min(p{sn,bg,evnt}) max(p{sn,bg,evnt})] , 'LineWidth' , 3 , 'color' , 'k')
                         end
@@ -1038,12 +1006,14 @@ switch what
         C.ChnkPlcmnt = [zeros(length(C.ChnkPlcmnt) , 1) , C.ChnkPlcmnt ];
         for cp = 1:length(C.ChnkPlcmnt) 
             if ~ismember(C.seqNumb(cp) , [20 , 0])
-                tvec = [C.ChnkPlcmnt(cp,:);[-C.ChnkPlcmnt(cp,:)]]
+                tvec = [C.ChnkPlcmnt(cp,:);[-C.ChnkPlcmnt(cp,:)]];
             else
-                tvec = [C.ChnkPlcmnt(cp,:);zero]
-                ChnkPlcmnt(cp,:) = tvec(:)';
-        
-        C.ChnkPlcmnt(:,2) = 0; % make sure the first press does not enter analysis
+                tvec = [C.ChnkPlcmnt(cp,:);zeros(1,size(C.ChnkPlcmnt(cp,:),2))];
+            end
+            ChnkPlcmnt(cp,:) = tvec(:)';
+        end
+        C.ChnkPlcmnt = ChnkPlcmnt;
+%         C.ChnkPlcmnt(:,2) = 0; % make sure the first press does not enter analysis
         %% prepare data for testing Block Groups against eachother
         D = [];
         for tn = 1:length(C.TN)
@@ -1070,37 +1040,133 @@ switch what
         end
         %% prepare data for testing Block Groups against eachother
         % applyBanding
+        
         figure('color' , 'white')
-        SN = unique(D.seqNumb);
-        subplot(311)
-        for sn = 1:length(SN)
-            T = getrow(D , D.band == 6 & D.seqNumb == SN(sn));  % high gamma
-            lineplot([T.eventNum T.blockGroup] , T.avgPSD , 'style_thickline' , 'linecolor' , colorz{sn} , 'errorcolor' , colorz{sn})
-            hold on
+        fcount = 1;
+        Co = colorz(1:length(unique(D.seqNumb)));
+        for bb = 6:-1:4
+            subplot(3,1,fcount)
+            lineplot([D.eventNum D.blockGroup] , D.avgPSD , 'style_thickline' , 'linecolor' , Co , 'errorcolor' , Co,...
+                'subset' , D.band == bb  , 'split' , D.seqNumb , 'leg' , {'random' , 'structured'})
+            title([BandInfo.bandsLab(bb) , ' Band Power'])
+            line([0 50] , [0 0] , 'color' , 'k')
+            set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , max(T.eventNum)))
+            fcount = fcount+1;
         end
-        set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , max(T.eventNum)))
-        title('High Gamma Band Power Across days for Random (blue) and Structured (red/green)')
-        grid on
+      
         
-        subplot(312)
-        for sn = 1:length(SN)
-            T = getrow(D , D.band == 5 & D.seqNumb == SN(sn));  % high gamma
-            lineplot([T.eventNum T.blockGroup] , T.avgPSD , 'style_thickline' , 'linecolor' , colorz{sn} , 'errorcolor' , colorz{sn} )
-            hold on
-        end
-        set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , max(T.eventNum)))
-        title('Low Gamma Band Power Across days for Random (blue) and Structured (red)')
-        grid on
+    case 'Aligned_singleFing_average'
         
-        subplot(313)
-        for sn = 1:length(SN)
-            T = getrow(D , D.band == 4 & D.seqNumb == SN(sn));  % high gamma
-            lineplot([T.eventNum T.blockGroup] , T.avgPSD , 'style_thickline' , 'linecolor' , colorz{sn} , 'errorcolor' , colorz{sn} )
-            hold on
+        seq = input('Slow or Fast? (s/f)', 's');
+        switch seq
+            case {'s'}
+                allSubj_BlockGroup(1).bg = {'SingleFingSlow1','SingleFingSlow2','SingleFingSlow3','SingleFingSlow4'};
+                allSubj_BlockGroup(2).bg = {'SingleFingSlow1','SingleFingSlow2','SingleFingSlow3'};
+                allSubj_BlockGroup(1).bg = {'SingleFingSlow1','SingleFingSlow2','SingleFingSlow3','SingleFingSlow4'};
+                
+            case {'f'}
+                allSubj_BlockGroup(1).bg = {'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' };
+                allSubj_BlockGroup(2).bg = {'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3'};
+                allSubj_BlockGroup(1).bg = {'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' };
         end
-        set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , max(T.eventNum)))
-        title('Beta Band Power Across days for Random (blue) and Structured (red)')
-        grid on
+        daylab(1).dl = {'Day1' , 'Day2' , 'Day3' , 'Day4'};
+        daylab(2).dl = {'Day1' , 'Day2' , 'Day3' };
+        daylab(3).dl = {'Day1' , 'Day2' , 'Day3' , 'Day4'};
+        
+        BlockGroup = allSubj_BlockGroup(subjNum).bg;
+        C = [];
+        T = [];
+
+        for bg = 1:length(BlockGroup)
+            load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
+           
+            BGl(bg) = find(strcmp(blockGroupNames , BlockGroup{bg}));
+            E = getrow(E , BGl(bg));
+            if isempty(E.EM)
+                error('Nothing to plot!')
+            end
+            filename = [mainDir ,  'Group_Aligned_PSD' , num2str(BGl(bg)),'.mat'];
+            load(filename);
+            
+            Pall = getrow(Pall , Pall.seqNumb ~= 100 & ~Pall.isError);
+            seqInfo.nums = sequenceType.TypeNums;
+            seqInfo.tags = sequenceType.Typetags;
+            
+            SN = unique(Pall.seqNumb);
+            for sn = 1:length(SN)
+                T = getrow(Pall , Pall.seqNumb == SN(sn));
+                % reduce the band and channel dimensions
+                for evnt = 2:2:2*(T.seqlength(1)+1)
+                    for tn = 1:length(T.TN)
+                        for bands = 1:size(T.PSD1{tn , evnt/2} , 2)
+                            temp = squeeze(T.PSD1{tn , evnt/2}(:,bands,:));
+                            eval(['T.reducPSD' , num2str(bands) , '(tn , evnt) = nanmean(nanmean(temp(Chan2Plot , :)));'])
+                        end
+                    end
+                end
+                for evnt = 1:2:2*(T.seqlength(1)+1)
+                    for tn = 1:length(T.TN)
+                        for bands = 1:size(T.PSD2{tn , floor(evnt/2)+1} , 2)
+                            temp = squeeze(T.PSD2{tn , floor(evnt/2)+1}(:,bands,:));
+                            eval(['T.reducPSD' , num2str(bands) , '(tn , evnt) = nanmean(nanmean(temp(Chan2Plot , :)));'])
+                        end
+                    end
+                end
+                T.blockgroup = bg*ones(size(T.BN));
+                C = addstruct(C , T);
+            end
+        end
+        % account for the first event which is the stim onset
+        % interleave the chink placement markers with 0 and negatives to
+        % account for between event intervals
+        C.ChnkPlcmnt = [zeros(length(C.ChnkPlcmnt) , 1) , C.ChnkPlcmnt ];
+        for cp = 1:length(C.ChnkPlcmnt) 
+            if ~ismember(C.seqNumb(cp) , [20 , 0])
+                tvec = [C.ChnkPlcmnt(cp,:);[-C.ChnkPlcmnt(cp,:)]];
+            else
+                tvec = [C.ChnkPlcmnt(cp,:);zeros(1,size(C.ChnkPlcmnt(cp,:),2))];
+            end
+            ChnkPlcmnt(cp,:) = tvec(:)';
+        end
+        C.ChnkPlcmnt = ChnkPlcmnt;
+%         C.ChnkPlcmnt(:,2) = 0; % make sure the first press does not enter analysis
+        %% prepare data for testing Block Groups against eachother
+        D = [];
+        for tn = 1:length(C.TN)
+            temp = getrow(C , tn);
+            T = [];
+            T.avgPSD = [];
+            T.seqNumb = [];
+            T.band = [];
+            T.blockGroup = [];
+            T.TN = [];
+            T.eventNum = [];
+            T.ChnkPlcmnt = [];
+            for bands = 1:size(temp.PSD1{1} , 2)
+               eval(['A = temp.reducPSD' , num2str(bands) , ';']);
+               T.avgPSD = [T.avgPSD ; A'];
+               T.eventNum = [T.eventNum ; [1:length(A)]'];
+               T.ChnkPlcmnt = [T.ChnkPlcmnt ; temp.ChnkPlcmnt'];
+               T.seqNumb = [T.seqNumb ; temp.seqNumb*ones(size(A'))];
+               T.band = [T.band; bands*ones(size(A'))];
+               T.blockGroup = [T.blockGroup ; temp.blockgroup*ones(size(A'))];
+               T.TN = [T.TN ; temp.TN*ones(size(A'))];
+            end
+            D = addstruct(D , T);
+        end
+        %% prepare data for testing Block Groups against eachotherfigure('color' , 'white')
+        fcount = 1;
+        Co = colorz(1:length(unique(D.seqNumb)));
+        for bb = 6:-1:4
+            subplot(3,1,fcount)
+            lineplot([D.eventNum D.blockGroup] , D.avgPSD , 'style_thickline' , 'linecolor' , Co , 'errorcolor' , Co,...
+                'subset' , D.band == bb )
+            title([BandInfo.bandsLab(bb) , ' Band Power'])
+            line([0 50] , [0 0] , 'color' , 'k')
+            set(gca , 'XTickLabel' , repmat(daylab(subjNum).dl , 1 , max(T.eventNum)))
+            fcount = fcount+1;
+        end
+
     case 'AlignedWarped_SeqType'
         colorz = {[0 0  1],[1 0 0],[0 1 0],[1 0 1],[0 1 1],[0.7 0.7 0.7],[1 1 0],[.3 .3 .3]};
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
@@ -1394,7 +1460,7 @@ switch what
             figCount = figCount+1;
         end 
         legend(leg , titleLab)
-    case 'plot_Blocks'
+    case 'plot_BlocksPower'
         bn = input('Enter block Number');
         BlockPow = load([mainDir , 'BlockPow' , num2str(bn) , '.mat']);
         figure('color' , 'white')
@@ -1405,7 +1471,7 @@ switch what
         end
         for band = 1:length(BandInfo.bandid)
             subplot(length(BandInfo.bands),1,band)
-            Power = BlockPow.REG(:,:,1000:end-1000);
+            Power = BlockPow.REG(:,:,:);%...1000:end-1000);
 %             Power = (Power- repmat(BlockPow.BaseLine , 1,1,size(Power , 3)))./repmat(BlockPow.BaseLine , 1,1,size(Power , 3));
             A = squeeze(nanmean(Power(Chan2Plot , : ,:), 1));
             B = squeeze(nanmean(A(BandInfo.bandid{band}(1):BandInfo.bandid{band}(2),:),1));
@@ -1414,8 +1480,8 @@ switch what
             hold on
             % plot(marker)
             for itr = 1:length(BlockPow.start_tr)
-                line([BlockPow.start_tr(itr)-1000,BlockPow.start_tr(itr)-1000] , [min(B),max(B)] , 'LineWidth' , 3 , 'color' , 'r');
-                line([BlockPow.end_tr(itr)-1000,BlockPow.end_tr(itr)-1000] , [min(B),max(B)] , 'LineWidth' , 1 , 'color' , 'r');
+                line([BlockPow.start_tr(itr),BlockPow.start_tr(itr)] , [min(B),max(B)] , 'LineWidth' , 3 , 'color' , 'r');
+                line([BlockPow.end_tr(itr),BlockPow.end_tr(itr)] , [min(B),max(B)] , 'LineWidth' , 1 , 'color' , 'r');
             end
             title(['Frequency range ' , BandInfo.bandsLab{band}])
             set(gca , 'Box' , 'off')
