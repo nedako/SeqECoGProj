@@ -1,7 +1,5 @@
-subjNum = 2;
-% Good Channels for P4
-chans = [15:21 93:99 101:110 112 28];
-%%
+subjNum = 2;% insert the subject number here
+chans = [15:21 93:99 101:110 112 28];% insert the subject number here
 seqeeg_makeData(subjNum , chans)
 
 

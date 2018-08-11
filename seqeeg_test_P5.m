@@ -1,9 +1,7 @@
 
 %% Make all the data structures
-subjNum = 3;
-% Good Channels for P4
-chans = [4 6:12 14 26:34 36:45 47 77 78 80 94:97 105:111 18];
-%%
+subjNum = 3;% insert the subject number here
+chans = [4 6:12 14 26:34 36:45 47 77 78 80 94:97 105:111 18];% insert the subject number here
 seqeeg_makeData(subjNum , chans)
 
 %% Visualize Behavior

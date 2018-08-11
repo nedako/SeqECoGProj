@@ -11,9 +11,9 @@ FreqRange = [4 184];
 numFreqBins = 45;
 subjname = {'P2', 'P4' , 'P5'};
 c = 1;
+saveDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} , '/'] ;
 while(c<=length(varargin))
     switch(varargin{c})
-        
         case {'NumWarpSampChunk'}
             % Number of warping sample for chunks, fast single finger  Default = 200
             eval([varargin{c} '= varargin{c+1};']);
@@ -26,7 +26,6 @@ while(c<=length(varargin))
             % Block Group to plot
             eval([varargin{c} '= varargin{c+1};']);
             c=c+2;
-            
         case {'DownsampleRate'}
             eval([varargin{c} '= varargin{c+1};']);
             c=c+2;
@@ -47,13 +46,12 @@ while(c<=length(varargin))
             error(sprintf('Unknown option: %s',varargin{c}));
     end
 end
-min_freq =  FreqRange(1);
-max_freq = FreqRange(2);
-frex = linspace(min_freq, max_freq,numFreqBins);
+
 Fs = 1024;
 Fs_ds = floor(Fs/DownsampleRate);
 
 %% HouseKeeping  : load required data
+
 mainDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} ,'/'];
 load([mainDir , 'ChanLabels.mat'])
 ChanLabels = ChanLabels(Channels);
@@ -66,33 +64,36 @@ save([mainDir , 'AllData_AvgMarker_SeqType.mat'] , 'E');
 
 E  = seqeeg_addEventMarker(Events, subjNum, Fs_ds , 'CalcAveragePattern' , 'NumWarpSampFast' , NumWarpSampFast, 'NumWarpSampSlow'  ,NumWarpSampSlow)';
 save([mainDir , 'AllData_AvgMarker.mat'] , 'E');
-        
-        
-% block groupings for subjects
-BG(1).blockGroups =  {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:7] , [9:11] , [8 12] , [15:17] , [19:21] , [23:25],...
-    [18 22] , [28:30] , [32:34] , [36:38], [31 35 39],[42:44],[],[]}';
-% block groupings for subject 2
-BG(2).blockGroups = {[ ] , [2 8], [14 20 26], [29 38], [], [1 7],[13 19 25], [28 37], [] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
-    [18 24] , [30:32] , [34:36] , [], [27 33],[],[],[]}';
-% block groupings for subject 3
-BG(3).blockGroups = {[ ] , [1 7], [13 19], [25 31], [37 43], [2 8],[14 20], [26 32], [38 44] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
-    [18 24] , [27:29] , [33:35] , [], [30 36],[39:41] , [45:47] [42 48]}';
 
-% define block types
-blockGroups = BG(subjNum).blockGroups;
-blockGroupNames = {'SingleFingNat' , 'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4',...
-    'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' , 'Intermixed1' , 'Intermixed2' , ...
-    'ChunkDay1' , 'Intermixed3' , 'Intermixed4' , 'Intermixed5', 'ChunkDay2' , 'Intermixed6' , ...
-    'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9','Intermixed10','ChunkDay4'}';
+
+[~, ~, BLockGroups] = xlsread([saveDir , 'BLockGroups.xlsx'],'Sheet1');
+BLockGroups = BLockGroups(1:end,:);
+BLockGroups(cellfun(@(x) ~isempty(x) && isnumeric(x) && isnan(x),BLockGroups)) = {''};
+idx = cellfun(@ischar, BLockGroups);
+BLockGroups(idx) = cellfun(@(x) string(x), BLockGroups(idx), 'UniformOutput', false);
+clearvars idx;
+
+for bg = 1:length(BLockGroups)
+    if ~isnumeric(BLockGroups{bg,1})
+        blockGroups{bg} = str2num(char(BLockGroups{bg,1}));
+    else
+        blockGroups{bg} = BLockGroups{bg,1};
+    end
+end
+blockGroupNames = BLockGroups(:,2);
 fastBlock = horzcat(blockGroups{1} ,blockGroups{6} , blockGroups{7}, blockGroups{8}, blockGroups{9},...
     blockGroups{12}, blockGroups{16}, blockGroups{20}, blockGroups{23});
-
-
+%% Define freq bands
+min_freq =  FreqRange(1);
+max_freq = FreqRange(2);
+frex = linspace(min_freq, max_freq,numFreqBins);
 BandInfo.bandsLab = {'Delta <4Hz' , 'Theta 5-8Hz' , 'Alpha 9-16Hz' , 'Beta 17-36Hz' , 'L-Gamma 37-80Hz' , 'H-Gamma 80-100HZ' , 'HIGH 100-180HZ'};
-BandInfo.bands = {[0 4], [5 9] [9 17] [17 36] [37 80] [80 110] [100 180]};
+BandInfo.bands = {[0 4], [5 8] [9 16] [17 36] [37 80] [80 100] [100 180]};
+for b = 1:length(BandInfo.bands)
+    BandInfo.bandid{b} = [find(frex>BandInfo.bands{b}(1) ,1, 'first') , find(frex<BandInfo.bands{b}(2) ,1, 'last')];
+end
 
-
-
+%%
 switch what
     case 'binned_BlockGroup'
         % Pall needs to be the structure containing time normalized, average
@@ -495,8 +496,7 @@ switch what
             save(saveName , '-struct','P', '-v7.3');
         end
     case 'Aligned_SeqType'
-        % Pall is the AllData_PSD_Warped_SeqType.mat
-        % patterned PSDs so the output of Pall  = seqeeg_parseEEG_PSD('TimeWarpPSD_Raw_Binned_seqType' , Pall, subjNum);
+
         load([mainDir , 'AllData_AvgMarker_SeqType.mat'])
         SeqTrans = [5 11 22 33 44 55 0 1 2 3 4 103 104 203 204;...
             100 10 10 10 10 10 20 30 30 30 30 40 50 40 50];

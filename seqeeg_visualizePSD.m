@@ -14,7 +14,7 @@ function seqeeg_visualizePSD(Pall , subjNum, what,varargin)
 %      'raw_BlockGroup_AvgChann'
 
 %% set defaults and deal with varargin
-
+saveDir = ['/Volumes/MotorControl/data/SeqECoG/ecog1/iEEG data/' subjname{subjNum} , '/'] ;
 clear tempcol
 c1 = [255, 153, 179]/255; % Random Red Tones
 ce = [153, 0, 51]/255;
@@ -133,22 +133,21 @@ load([mainDir , 'AllData_Events.mat'])
 load([mainDir , 'AllData_AvgMarker.mat'])
 %% HouseKeeping
 
-% block groupings for subjects
-BG(1).blockGroups =  {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:7] , [9:11] , [8 12] , [15:17] , [19:21] , [23:25],...
-    [18 22] , [28:30] , [32:34] , [36:38], [31 35 39],[42:44],[],[]}';
-% block groupings for subject 2
-BG(2).blockGroups = {[ ] , [2 8], [14 20 26], [29 38], [], [1 7],[13 19 25], [28 37], [] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
-    [18 24] , [30:32] , [34:36] , [], [27 33],[],[],[]}';
-% block groupings for subject 3
-BG(3).blockGroups = {[ ] , [1 7], [13 19], [25 31], [37 43], [2 8],[14 20], [26 32], [38 44] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
-    [18 24] , [27:29] , [33:35] , [], [30 36],[39:41] , [45:47] [42 48]}';
+[~, ~, BLockGroups] = xlsread([saveDir , 'BLockGroups.xlsx'],'Sheet1');
+BLockGroups = BLockGroups(1:end,:);
+BLockGroups(cellfun(@(x) ~isempty(x) && isnumeric(x) && isnan(x),BLockGroups)) = {''};
+idx = cellfun(@ischar, BLockGroups);
+BLockGroups(idx) = cellfun(@(x) string(x), BLockGroups(idx), 'UniformOutput', false);
+clearvars idx;
 
-% define block types
-blockGroups = BG(subjNum).blockGroups;
-blockGroupNames = {'SingleFingNat' , 'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4',...
-    'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' , 'Intermixed1' , 'Intermixed2' , ...
-    'ChunkDay1' , 'Intermixed3' , 'Intermixed4' , 'Intermixed5', 'ChunkDay2' , 'Intermixed6' , ...
-    'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9','Intermixed10','ChunkDay4'}';
+for bg = 1:length(BLockGroups)
+    if ~isnumeric(BLockGroups{bg,1})
+        blockGroups{bg} = str2num(char(BLockGroups{bg,1}));
+    else
+        blockGroups{bg} = BLockGroups{bg,1};
+    end
+end
+blockGroupNames = BLockGroups(:,2);
 fastBlock = horzcat(blockGroups{1} ,blockGroups{6} , blockGroups{7}, blockGroups{8}, blockGroups{9},...
     blockGroups{12}, blockGroups{16}, blockGroups{20}, blockGroups{23});
 

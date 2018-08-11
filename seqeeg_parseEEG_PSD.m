@@ -14,7 +14,7 @@ FreqRange = [4 184];
 numFreqBins = 45;
 load([saveDir , 'ChanLabels.mat']);
 Channels = [1:length(ChanLabels)];
-%%  control for too short IPIs that the keys get accidentally pressed
+%%  control for too short IPIs that the keys get accidentally pressed - > happens for Subj 1
 if subjNum==1
     for i = 1:length(Dall.TN)
         if sum(Dall.IPI(i,:)<120)
@@ -66,28 +66,10 @@ while(c<=length(varargin))
 end
 
 
+%%
 
-%% HousKeeping : load up data specify which block and trial are fast and which are slow
-% block groupings for subjects
-BG(1).blockGroups =  {[1 2] , [3], [13], [26], [40] , [4], [14], [27] [41] , [5:7] , [9:11] , [8 12] , [15:17] , [19:21] , [23:25],...
-    [18 22] , [28:30] , [32:34] , [36:38], [31 35 39],[42:44],[],[]}';
-% block groupings for subject 2
-BG(2).blockGroups = {[ ] , [2 8], [14 20 26], [29 38], [], [1 7],[13 19 25], [28 37], [] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
-    [18 24] , [30:32] , [34:36] , [], [27 33],[],[],[]}';
-BG(3).blockGroups = {[ ] , [1 7], [13 19], [25 31], [37 43], [2 8],[14 20], [26 32], [38 44] , [3:5] , [9:11] , [6 12] , [15:17] , [21:23] , [],...
-    [18 24] , [27:29] , [33:35] , [], [30 36],[39:41] , [45:47] [42 48]}';
 
-% define block types
-blockGroups = BG(subjNum).blockGroups;
-blockGroupNames = {'SingleFingNat' , 'SingleFingSlow1' , 'SingleFingSlow2'  , 'SingleFingSlow3' ,'SingleFingSlow4',...
-    'SingleFingFast1' , 'SingleFingFast2' , 'SingleFingFast3', 'SingleFingFast4' , 'Intermixed1' , 'Intermixed2' , ...
-    'ChunkDay1' , 'Intermixed3' , 'Intermixed4' , 'Intermixed5', 'ChunkDay2' , 'Intermixed6' , ...
-    'Intermixed7' , 'Intermixed8', 'ChunkDay3', 'Intermixed9','Intermixed10','ChunkDay4'}';
-fastBlock = horzcat(blockGroups{1} ,blockGroups{6} , blockGroups{7}, blockGroups{8}, blockGroups{9},...
-    blockGroups{12}, blockGroups{16}, blockGroups{20}, blockGroups{23});
 
-Dall.Fast = zeros(size(Dall.BN));
-Dall.Fast(ismember(Dall.BN , fastBlock)) = 1;
 min_freq =  FreqRange(1);
 max_freq = FreqRange(2);
 frex = linspace(min_freq, max_freq,numFreqBins);
@@ -96,16 +78,13 @@ BandInfo.bands = {[0 4], [5 8] [9 16] [17 36] [37 80] [80 100] [100 180]};
 for b = 1:length(BandInfo.bands)
     BandInfo.bandid{b} = [find(frex>BandInfo.bands{b}(1) ,1, 'first') , find(frex<BandInfo.bands{b}(2) ,1, 'last')];
 end
-
-
-
+%%
 
 cd(mainDir)
 % Import the BLock Info
 [~, ~, BlockInfo] = xlsread([mainDir , 'BlockInfo.xlsx'],'Sheet1');
 BlockInfo = BlockInfo(2:end,:);
 BlockInfo(cellfun(@(x) ~isempty(x) && isnumeric(x) && isnan(x),BlockInfo)) = {''};
-
 idx = cellfun(@ischar, BlockInfo);
 BlockInfo(idx) = cellfun(@(x) string(x), BlockInfo(idx), 'UniformOutput', false);
 Fs = 1024;
@@ -113,6 +92,26 @@ Fs_ds = Fs/DownsampleRate;
 clearvars idx;
 Dout = [];
 
+
+[~, ~, BLockGroups] = xlsread([saveDir , 'BLockGroups.xlsx'],'Sheet1');
+BLockGroups = BLockGroups(1:end,:);
+BLockGroups(cellfun(@(x) ~isempty(x) && isnumeric(x) && isnan(x),BLockGroups)) = {''};
+idx = cellfun(@ischar, BLockGroups);
+BLockGroups(idx) = cellfun(@(x) string(x), BLockGroups(idx), 'UniformOutput', false);
+clearvars idx;
+
+for bg = 1:length(BLockGroups)
+    if ~isnumeric(BLockGroups{bg,1})
+        blockGroups{bg} = str2num(char(BLockGroups{bg,1}));
+    else
+        blockGroups{bg} = BLockGroups{bg,1};
+    end
+end
+blockGroupNames = BLockGroups(:,2);
+fastBlock = horzcat(blockGroups{1} ,blockGroups{6} , blockGroups{7}, blockGroups{8}, blockGroups{9},...
+    blockGroups{12}, blockGroups{16}, blockGroups{20}, blockGroups{23});
+Dall.Fast = zeros(size(Dall.BN));
+Dall.Fast(ismember(Dall.BN , fastBlock)) = 1;
 
 %% chop up the EEG data into trials, and filter out the power line noise
 switch what

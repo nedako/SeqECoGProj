@@ -13,7 +13,6 @@ subjname = {'P2', 'P4' , 'P5'};
 c = 1;
 while(c<=length(varargin))
     switch(varargin{c})
-        
         case {'NumWarpSampChunk'}
             % Number of warping sample for chunks, fast single finger  Default = 200
             eval([varargin{c} '= varargin{c+1};']);
@@ -26,7 +25,6 @@ while(c<=length(varargin))
             % Block Group to plot
             eval([varargin{c} '= varargin{c+1};']);
             c=c+2;
-            
         case {'DownsampleRate'}
             eval([varargin{c} '= varargin{c+1};']);
             c=c+2;
